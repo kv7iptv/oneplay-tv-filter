@@ -1,4 +1,3 @@
-
 import os
 import re
 import unicodedata
@@ -94,51 +93,147 @@ REGION_KEYWORDS = {
     ],
 }
 
+# A ordem representa a prioridade de seleção.
+# Os títulos não encontrados na lista continuam elegíveis para preencher
+# as vagas restantes até o limite de 126.
 KIDS_PRIORITY = [
-    "BLUEY", "BOB ESPONJA", "PATRULHEIROS EM ACAO",
-    "PEIXONAUTA", "MUNDO BITA", "3 PALAVRINHAS",
-    "TURMA COCOMELON", "DANIEL TIGRE", "SANTIAGO DOS MARES",
-    "PJ MASKS", "MIRACULOUS", "GIGANTOSSAURO", "BATWHEELS",
-    "BEN 10", "POKEMON", "POKEMON HORIZONTES", "DRAGON BALL",
-    "NARUTO", "NARUTO SHIPPUDEN", "ONE PIECE", "YU-GI-OH",
-    "AVATAR A LENDA DE AANG", "HORA DE AVENTURA",
-    "IRMAO DO JOREL", "TOM E JERRY", "PICA-PAU", "OS SMURFS",
-    "TICO E TECO", "TIMAO E PUMBA", "DUCKTALES",
-    "BABY LOONEY TUNES", "O SHOW DOS LOONEY TUNES",
-    "KND A TURMA DO BAIRRO", "CORAGEM O CAO COVARDE",
-    "AS AVENTURAS DE JACKIE CHAN", "JUSTICA JOVEM",
-    "LIGA DA JUSTICA SEM LIMITES", "HOMEM-ARANHA", "X-MEN",
-    "OS CAVALEIROS DO ZODIACO", "SUPER ONZE", "SUPER-C HOQUE",
-    "YU YU HAKUSHO", "SAILOR MOON", "DIGIMON", "BEYBLADE",
-    "MEDABOTS", "MECANIMAIS", "GLOOBINHO", "GLOOB",
-    "DISCOVERY KIDS", "CARTOON NETWORK", "CARTOONITO",
-    "TOONCAST", "TV RA TIM BUM", "DREAMWORKS",
+    "BLUEY",
+    "BOB ESPONJA",
+    "PATRULHA CANINA",
+    "PAW PATROL",
+    "PEPPA PIG",
+    "MUNDO BITA",
+    "3 PALAVRINHAS",
+    "COCOMELON",
+    "TURMA COCOMELON",
+    "PATRULHEIROS EM ACAO",
+    "PEIXONAUTA",
+    "DANIEL TIGRE",
+    "GALINHA PINTADINHA",
+    "MUNDO DE GREG",
+    "O SHOW DA LUNA",
+    "SHOW DA LUNA",
+    "MIRACULOUS",
+    "PJ MASKS",
+    "PATRULHA CANINA",
+    "SANTIAGO DOS MARES",
+    "GIGANTOSSAURO",
+    "BATWHEELS",
+    "BEN 10",
+    "POKEMON HORIZONTES",
+    "POKEMON",
+    "DRAGON BALL",
+    "NARUTO SHIPPUDEN",
+    "NARUTO",
+    "ONE PIECE",
+    "YU-GI-OH",
+    "AVATAR A LENDA DE AANG",
+    "HORA DE AVENTURA",
+    "IRMÃO DO JOREL",
+    "IRMAO DO JOREL",
+    "TOM E JERRY",
+    "PICA-PAU",
+    "OS SMURFS",
+    "TICO E TECO",
+    "TIMAO E PUMBA",
+    "DUCKTALES",
+    "BABY LOONEY TUNES",
+    "O SHOW DOS LOONEY TUNES",
+    "KND A TURMA DO BAIRRO",
+    "CORAGEM O CAO COVARDE",
+    "AS AVENTURAS DE JACKIE CHAN",
+    "JUSTICA JOVEM",
+    "LIGA DA JUSTICA SEM LIMITES",
+    "HOMEM-ARANHA",
+    "X-MEN 97",
+    "X-MEN",
+    "OS CAVALEIROS DO ZODIACO",
+    "SUPER ONZE",
+    "YU YU HAKUSHO",
+    "SAILOR MOON",
+    "DIGIMON",
+    "BEYBLADE",
+    "MEDABOTS",
+    "MECANIMAIS",
+    "GLOOBINHO",
+    "GLOOB",
+    "DISCOVERY KIDS",
+    "CARTOON NETWORK",
+    "CARTOONITO",
+    "TOONCAST",
+    "TV RA TIM BUM",
+    "DREAMWORKS",
     "MUNDO MARAVILHOSAMENTE ESTRANHO DE GUMBALL",
-    "O SHOW DO PATRICK ESTRELA", "OS JETSONS",
-    "ESQUADRILHA PARAFUSO", "GARGULAS", "HE-MAN",
-    "THUNDERCATS", "SWAT KATS", "LILO E STITCH",
-    "HOTEL TRANSYLVANIA", "JELLYSTONE",
-    "MAYA E OS 3 GUERREIROS", "YABBA-DABBA DINOSSAUROS",
-    "ZIG E SHARKO", "TRES ESPIAS DEMAIS",
-    "A TURMA DO PATETA", "A VACA E O FRANGO",
-    "A XERIFE CALLIE NO OESTE", "ALADDIN", "CAVALO DE FOGO",
-    "CAPITAO PLANETA", "DU DUDU E EDU", "EDENS ZERO",
-    "FAIRY TAIL", "HAIKYU", "HUNTER X HUNTER", "INUYASHA",
-    "JUJUTSU KAISEN", "MY HERO ACADEMIA", "MOB PSYCHO 100",
-    "ONE PUNCH MAN", "SAKAMOTO DAYS", "SOLO LEVELING",
-    "SPY X FAMILY", "DR. STONE", "FULLMETAL ALCHEMIST BROTHERHOOD",
-    "FRIEREN", "VINLAND SAGA", "KAIJU NO. 8", "BLACK CLOVER",
-    "BLEACH", "BLUE LOCK", "DEMON SLAYER",
-    "JOJOS BIZARRE ADVENTURE", "CHAINSAW MAN", "CYBERPUNK",
-    "DEATH NOTE", "NEON GENESIS EVANGELION", "STEINSGATE",
-    "SWORD ART ONLINE", "RECORD OF RAGNAROK", "NANATSU NO TAIZAI",
-    "REZERO", "THE RISING OF THE SHIELD HERO", "OVERLORD",
-    "MASHLE", "FUMETSU NO ANATA E", "DAN DA DAN", "TO BE HERO X",
-    "WHAT IF", "X-MEN 97", "INVENCIVEL", "CAPITAO FALL",
-    "SCOTT PILGRIM", "4 CONTRA O APOCALIPSE", "100 LOBO",
+    "O SHOW DO PATRICK ESTRELA",
+    "OS JETSONS",
+    "ESQUADRILHA PARAFUSO",
+    "GARGULAS",
+    "HE-MAN",
+    "THUNDERCATS",
+    "SWAT KATS",
+    "LILO E STITCH",
+    "HOTEL TRANSYLVANIA",
+    "JELLYSTONE",
+    "MAYA E OS 3 GUERREIROS",
+    "YABBA-DABBA DINOSSAUROS",
+    "ZIG E SHARKO",
+    "TRES ESPIAS DEMAIS",
+    "A TURMA DO PATETA",
+    "A VACA E O FRANGO",
+    "A XERIFE CALLIE NO OESTE",
+    "ALADDIN",
+    "CAVALO DE FOGO",
+    "CAPITAO PLANETA",
+    "DU DUDU E EDU",
+    "EDENS ZERO",
+    "FAIRY TAIL",
+    "HAIKYU",
+    "HUNTER X HUNTER",
+    "INUYASHA",
+    "JUJUTSU KAISEN",
+    "MY HERO ACADEMIA",
+    "MOB PSYCHO 100",
+    "ONE PUNCH MAN",
+    "SAKAMOTO DAYS",
+    "SOLO LEVELING",
+    "SPY X FAMILY",
+    "DR. STONE",
+    "FULLMETAL ALCHEMIST BROTHERHOOD",
+    "FRIEREN",
+    "VINLAND SAGA",
+    "KAIJU NO. 8",
+    "BLACK CLOVER",
+    "BLEACH",
+    "BLUE LOCK",
+    "DEMON SLAYER",
+    "JOJOS BIZARRE ADVENTURE",
+    "CHAINSAW MAN",
+    "CYBERPUNK",
+    "DEATH NOTE",
+    "NEON GENESIS EVANGELION",
+    "STEINSGATE",
+    "SWORD ART ONLINE",
+    "RECORD OF RAGNAROK",
+    "NANATSU NO TAIZAI",
+    "REZERO",
+    "THE RISING OF THE SHIELD HERO",
+    "OVERLORD",
+    "MASHLE",
+    "FUMETSU NO ANATA E",
+    "DAN DA DAN",
+    "TO BE HERO X",
+    "WHAT IF",
+    "INVENCIVEL",
+    "CAPITAO FALL",
+    "SCOTT PILGRIM",
+    "4 CONTRA O APOCALIPSE",
+    "100 LOBO",
     "100 COISAS PARA FAZER ANTES DE VIRAR ZUMBI",
 ]
 
+# São nomes de canais tradicionais que podem aparecer na categoria.
+# A categoria 24H INFANTIS/DESENHOS também contém canais identificados
+# pelo nome do próprio desenho; esses títulos não dependem desta lista.
 LINEAR_KIDS = {
     "BOX KIDS TV",
     "CARTOON NETWORK",
@@ -336,7 +431,7 @@ def select_globo(entries):
 
     selected = []
 
-    print("Globo selecionada por região:")
+    print("\nGlobo selecionada por região:")
 
     for region in REGION_KEYWORDS:
         ordered = sorted(
@@ -350,10 +445,19 @@ def select_globo(entries):
     print(f"  Sem região identificável: {len(unresolved)}")
     print(f"  Total Globo selecionada: {len(selected)}")
 
-    if len(selected) < MAX_GLOBO_POR_REGIAO * len(REGION_KEYWORDS):
+    if unresolved:
+        print("\nEmissoras Globo sem região identificada:")
+        for name in sorted(unresolved, key=natural_key):
+            print(f"  - {name}")
+
+    meta = MAX_GLOBO_POR_REGIAO * len(REGION_KEYWORDS)
+
+    if len(selected) < meta:
         print(
-            "AVISO: não foi possível atingir a meta regional. "
-            "Canais sem região confirmada não serão incluídos automaticamente."
+            "\nAVISO: não foi possível atingir a meta de "
+            f"{meta} emissoras com a classificação atual. "
+            "As emissoras sem região confirmada não serão incluídas "
+            "automaticamente."
         )
 
     return selected
@@ -370,52 +474,64 @@ def kids_priority_key(entry):
 
 
 def select_kids(entries):
-    linear_groups = {}
-    vod_entries = {}
-
-    print("Exemplos de nomes recebidos na categoria infantil:")
-
-    for entry in entries[:20]:
-        print("  ", repr(get_name(entry)))
+    unique = {}
 
     for entry in entries:
         name = get_name(entry)
         base = name_without_quality(name)
-
-        if base in LINEAR_KIDS:
-            target = linear_groups
-        else:
-            target = vod_entries
-
-        previous = target.get(base)
+        previous = unique.get(base)
 
         if (
             previous is None
             or quality_rank(name) < quality_rank(get_name(previous))
         ):
-            target[base] = entry
+            unique[base] = entry
 
-    linear = sorted(linear_groups.values(), key=channel_sort_key)
-    vod = sorted(vod_entries.values(), key=kids_priority_key)
+    # Diagnóstico: mostra os títulos prioritários realmente disponíveis.
+    available_names = set(unique)
 
-    selected = linear[:MAX_INFANTIS]
-    remaining = MAX_INFANTIS - len(selected)
-    selected.extend(vod[:remaining])
+    priority_found = []
+    priority_missing = []
 
-    print(f"Canais infantis lineares únicos: {len(linear)}")
-    print(f"Títulos restantes disponíveis: {len(vod)}")
-    print(f"Entradas infantis selecionadas: {len(selected)}")
+    for keyword in KIDS_PRIORITY:
+        normalized_keyword = normalize(keyword)
 
-    if len(linear) == 0:
-        print(
-            "AVISO: nenhum canal linear reconhecido. "
-            "Use os exemplos acima para ajustar os nomes-base."
-        )
+        matches = [
+            name for name in available_names
+            if normalized_keyword in name
+        ]
+
+        if matches:
+            for name in sorted(matches, key=natural_key):
+                if name not in priority_found:
+                    priority_found.append(name)
+        else:
+            priority_missing.append(keyword)
+
+    print("\nDiagnóstico dos canais 24H infantis:")
+    print(f"  Títulos únicos disponíveis: {len(unique)}")
+    print(f"  Prioridades encontradas: {len(priority_found)}")
+
+    print("  Títulos prioritários encontrados:")
+    for name in priority_found:
+        print(f"    - {name}")
+
+    # Não imprime uma lista enorme de prioridades ausentes.
+    print(
+        "  Prioridades sem correspondência exata/parcial: "
+        f"{len(priority_missing)}"
+    )
+
+    ordered = sorted(unique.values(), key=kids_priority_key)
+    selected = ordered[:MAX_INFANTIS]
+
+    print(f"  Limite configurado: {MAX_INFANTIS}")
+    print(f"  Títulos selecionados: {len(selected)}")
 
     if len(selected) < MAX_INFANTIS:
         print(
-            f"AVISO: existem apenas {len(selected)} entradas "
-            "infantis selecionáveis."
+            "AVISO: há menos títulos únicos disponíveis do que o limite "
+            "configurado; todos os títulos únicos foram mantidos."
         )
 
     return selected
@@ -498,4 +614,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
