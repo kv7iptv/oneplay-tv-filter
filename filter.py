@@ -1,3 +1,4 @@
+
 import os
 import re
 import unicodedata
@@ -46,11 +47,11 @@ QUALITY_SUFFIXES = r"FHD2|FHD|H265|HD2|HD|SD2|SD|UHD|4K"
 REGION_KEYWORDS = {
     "NORTE": [
         "ACRE", "RIO BRANCO", "AMAPA", "MACAPA", "AMAZONAS",
-        "MANAUS", "ITACOATIARA", "PARINTINS", "PARA", "BELEM",
-        "ALTAMIRA", "CASTANHAL", "MARABA", "PARAGOMINAS",
-        "PARAUAPEBAS", "REDENCAO", "TAPAJOS", "RONDONIA",
-        "PORTO VELHO", "CACOAL", "VILHENA", "JI-PARANA",
-        "RORAIMA", "BOA VISTA", "GUAJARA MIRIM",
+        "MANAUS", "ITACOATIARA", "PARINTINS", "PARA",
+        "BELEM", "ALTAMIRA", "CASTANHAL", "MARABA",
+        "PARAGOMINAS", "PARAUAPEBAS", "REDENCAO", "TAPAJOS",
+        "RONDONIA", "PORTO VELHO", "CACOAL", "VILHENA",
+        "JI-PARANA", "RORAIMA", "BOA VISTA", "GUAJARA MIRIM",
     ],
     "NORDESTE": [
         "ALAGOAS", "MACEIO", "GAZETA ALAGOAS", "BAHIA",
@@ -60,7 +61,8 @@ REGION_KEYWORDS = {
         "RECIFE", "RIO GRANDE DO NORTE", "NATAL", "SERGIPE",
         "TERESINA", "PIAUI", "SANTA CRUZ", "SERRA MAR",
         "INTERTV COSTA BRANCA", "INTERTV CABUGI",
-        "OESTE BARREIRAS",
+        "OESTE BARREIRAS", "ASA BRANCA", "JUAZEIRO DO NORTE",
+        "TV SAO FRANCISCO", "TV SUDOESTE",
     ],
     "CENTRO-OESTE": [
         "BRASILIA", "DISTRITO FEDERAL", "ANHANGUERA",
@@ -79,7 +81,10 @@ REGION_KEYWORDS = {
         "TRIBUNA", "BAURU", "ITAPETININGA", "SOROCABA",
         "SJRP", "SAO JOSE DO RIO PRETO", "VANGUARDA",
         "TAUBATE", "S J CAMPOS", "FRONTEIRA PAULISTA",
-        "INTEG", "INTEGRACAO",
+        "INTEG", "INTEGRACAO", "MOGI DAS CRUZES",
+        "INTER ALTO LITORAL", "INTER DOS VALES",
+        "INTERTV CEL FABRICIANO", "INTERTV GOV VALADARES",
+        "VANG S J CAMPOS", "DIARIO MOGI",
     ],
     "SUL": [
         "PARANA", "RPC", "CASCAVEL", "CURITIBA",
@@ -93,9 +98,25 @@ REGION_KEYWORDS = {
     ],
 }
 
-# A ordem representa a prioridade de seleção.
-# Os títulos não encontrados na lista continuam elegíveis para preencher
-# as vagas restantes até o limite de 126.
+# Regras específicas para nomes ambíguos.
+# São avaliadas antes das palavras-chave genéricas.
+REGION_OVERRIDES = {
+    "GLOBO RPC PARANAVAI": "SUL",
+    "GLOBO DIARIO MOGI DAS CRUZES": "SUDESTE",
+    "GLOBO DIARIO MOGIDAS CRUZES": "SUDESTE",
+    "GLOBO VANG. S.J. CAMPOS": "SUDESTE",
+    "GLOBO INTERTV CEL FABRICIANO": "SUDESTE",
+    "GLOBO INTERTV GOV VALADARES": "SUDESTE",
+    "GLOBO JUAZEIRO DO NORTE": "NORDESTE",
+    "GLOBO TV ITACOTIARA": "NORTE",
+    "GLOBO TV JI-PARANA": "NORTE",
+    "GLOBO TV LIBERAL PARAGOMINAS": "NORTE",
+    "GLOBO TV OESTE": "NORDESTE",
+    "GLOBO TV SAO FRANCISCO": "NORDESTE",
+    "GLOBO TV SUDOESTE": "NORDESTE",
+    "GLOBO ASA BRANCA": "NORDESTE",
+}
+
 KIDS_PRIORITY = [
     "BLUEY",
     "BOB ESPONJA",
@@ -115,7 +136,6 @@ KIDS_PRIORITY = [
     "SHOW DA LUNA",
     "MIRACULOUS",
     "PJ MASKS",
-    "PATRULHA CANINA",
     "SANTIAGO DOS MARES",
     "GIGANTOSSAURO",
     "BATWHEELS",
@@ -129,7 +149,6 @@ KIDS_PRIORITY = [
     "YU-GI-OH",
     "AVATAR A LENDA DE AANG",
     "HORA DE AVENTURA",
-    "IRMÃO DO JOREL",
     "IRMAO DO JOREL",
     "TOM E JERRY",
     "PICA-PAU",
@@ -230,23 +249,6 @@ KIDS_PRIORITY = [
     "100 LOBO",
     "100 COISAS PARA FAZER ANTES DE VIRAR ZUMBI",
 ]
-
-# São nomes de canais tradicionais que podem aparecer na categoria.
-# A categoria 24H INFANTIS/DESENHOS também contém canais identificados
-# pelo nome do próprio desenho; esses títulos não dependem desta lista.
-LINEAR_KIDS = {
-    "BOX KIDS TV",
-    "CARTOON NETWORK",
-    "CARTOONITO",
-    "DISCOVERY KIDS",
-    "DREAMWORKS",
-    "DUMDUM",
-    "GLOOB",
-    "GLOOBINHO",
-    "KIDS MAIS",
-    "TOONCAST",
-    "TV RA TIM BUM",
-}
 
 
 def normalize(text):
@@ -402,11 +404,37 @@ def set_group_title(entry, group):
 
 def region_for_channel(name):
     normalized = normalize(name)
+
+    # 1. Nomes específicos têm precedência.
+    for exact_name, region in REGION_OVERRIDES.items():
+        if normalize(exact_name) in normalized:
+            return region
+
+    # 2. Evita a palavra genérica "PARA" causar conflito
+    # entre Pará e Paraná.
+    if "PARANAVAI" in normalized or "PARANA" in normalized:
+        return "SUL"
+
+    if (
+        "PARAGOMINAS" in normalized
+        or "TV LIBERAL" in normalized
+        or "PARAUAPEBAS" in normalized
+    ):
+        return "NORTE"
+
     matches = []
 
     for region, keywords in REGION_KEYWORDS.items():
-        if any(normalize(keyword) in normalized for keyword in keywords):
-            matches.append(region)
+        for keyword in keywords:
+            normalized_keyword = normalize(keyword)
+
+            # "PARA" sozinho é demasiado genérico.
+            if normalized_keyword == "PARA":
+                continue
+
+            if normalized_keyword in normalized:
+                matches.append(region)
+                break
 
     return matches[0] if len(matches) == 1 else None
 
@@ -467,7 +495,9 @@ def kids_priority_key(entry):
     base = name_without_quality(get_name(entry))
 
     for index, keyword in enumerate(KIDS_PRIORITY):
-        if normalize(keyword) in base:
+        normalized_keyword = normalize(keyword)
+
+        if normalized_keyword in base:
             return (0, index, natural_key(base))
 
     return (1, 0, natural_key(base))
@@ -487,40 +517,23 @@ def select_kids(entries):
         ):
             unique[base] = entry
 
-    # Diagnóstico: mostra os títulos prioritários realmente disponíveis.
     available_names = set(unique)
-
     priority_found = []
-    priority_missing = []
 
     for keyword in KIDS_PRIORITY:
         normalized_keyword = normalize(keyword)
 
-        matches = [
-            name for name in available_names
-            if normalized_keyword in name
-        ]
-
-        if matches:
-            for name in sorted(matches, key=natural_key):
-                if name not in priority_found:
-                    priority_found.append(name)
-        else:
-            priority_missing.append(keyword)
+        for name in sorted(available_names, key=natural_key):
+            if normalized_keyword in name and name not in priority_found:
+                priority_found.append(name)
 
     print("\nDiagnóstico dos canais 24H infantis:")
     print(f"  Títulos únicos disponíveis: {len(unique)}")
-    print(f"  Prioridades encontradas: {len(priority_found)}")
-
+    print(f"  Títulos que correspondem às prioridades: {len(priority_found)}")
     print("  Títulos prioritários encontrados:")
+
     for name in priority_found:
         print(f"    - {name}")
-
-    # Não imprime uma lista enorme de prioridades ausentes.
-    print(
-        "  Prioridades sem correspondência exata/parcial: "
-        f"{len(priority_missing)}"
-    )
 
     ordered = sorted(unique.values(), key=kids_priority_key)
     selected = ordered[:MAX_INFANTIS]
