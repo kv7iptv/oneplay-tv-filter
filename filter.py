@@ -139,23 +139,18 @@ KIDS_PRIORITY = [
     "100 COISAS PARA FAZER ANTES DE VIRAR ZUMBI",
 ]
 
-# Nomes-base de canais infantis lineares.
-# A comparação é exata depois de retirar o sufixo de qualidade.
 LINEAR_KIDS = {
-    normalize_name
-    for normalize_name in [
-        "BOX KIDS TV",
-        "CARTOON NETWORK",
-        "CARTOONITO",
-        "DISCOVERY KIDS",
-        "DREAMWORKS",
-        "DUMDUM",
-        "GLOOB",
-        "GLOOBINHO",
-        "KIDS MAIS",
-        "TOONCAST",
-        "TV RA TIM BUM",
-    ]
+    "BOX KIDS TV",
+    "CARTOON NETWORK",
+    "CARTOONITO",
+    "DISCOVERY KIDS",
+    "DREAMWORKS",
+    "DUMDUM",
+    "GLOOB",
+    "GLOOBINHO",
+    "KIDS MAIS",
+    "TOONCAST",
+    "TV RA TIM BUM",
 }
 
 
@@ -214,13 +209,10 @@ def get_name(entry):
 def canonical_group(group):
     name = normalize(group)
 
-    # Primeiro, correspondência direta com todas as categorias permitidas.
-    # Isso evita falhas causadas por acentos ou aliases desnecessários.
     for allowed in GROUPS:
         if name == normalize(allowed):
             return allowed
 
-    # Aliases aceitos para nomes alternativos da origem.
     aliases = {
         "LUTAS UFC": "LUTAS / UFC",
         "LUTAS/UFC": "LUTAS / UFC",
@@ -343,6 +335,7 @@ def select_globo(entries):
             destination[base] = entry
 
     selected = []
+
     print("Globo selecionada por região:")
 
     for region in REGION_KEYWORDS:
@@ -360,7 +353,7 @@ def select_globo(entries):
     if len(selected) < MAX_GLOBO_POR_REGIAO * len(REGION_KEYWORDS):
         print(
             "AVISO: não foi possível atingir a meta regional. "
-            "Nenhum canal sem região confirmada foi incluído automaticamente."
+            "Canais sem região confirmada não serão incluídos automaticamente."
         )
 
     return selected
@@ -380,12 +373,15 @@ def select_kids(entries):
     linear_groups = {}
     vod_entries = {}
 
+    print("Exemplos de nomes recebidos na categoria infantil:")
+
+    for entry in entries[:20]:
+        print("  ", repr(get_name(entry)))
+
     for entry in entries:
         name = get_name(entry)
         base = name_without_quality(name)
 
-        # Correspondência exata para evitar que GLOOB, por exemplo,
-        # seja confundido com GLOOBINHO.
         if base in LINEAR_KIDS:
             target = linear_groups
         else:
@@ -413,13 +409,13 @@ def select_kids(entries):
     if len(linear) == 0:
         print(
             "AVISO: nenhum canal linear reconhecido. "
-            "Confira os nomes reais da categoria na lista de origem."
+            "Use os exemplos acima para ajustar os nomes-base."
         )
 
     if len(selected) < MAX_INFANTIS:
         print(
-            f"AVISO: a categoria possui menos de {MAX_INFANTIS} "
-            "títulos únicos disponíveis."
+            f"AVISO: existem apenas {len(selected)} entradas "
+            "infantis selecionáveis."
         )
 
     return selected
@@ -486,6 +482,7 @@ def main():
                 output.write("\n".join(entry) + "\n")
 
     print("\nResumo por categoria:")
+
     for group in GROUPS:
         print(f"  {group}: {len(selected_by_group[group])}")
 
