@@ -31,15 +31,25 @@ jobs:
           PLAYLIST_URL: ${{ secrets.PLAYLIST_URL }}
         run: python filter.py
 
+      - name: Verificar arquivo gerado
+        run: |
+          test -s docs/oneplay.m3u
+          echo "Arquivo encontrado e nao esta vazio."
+          echo "Quantidade de canais:"
+          grep -c '^#EXTINF:' docs/oneplay.m3u
+
       - name: Publicar lista atualizada
         run: |
-          if git diff --quiet -- docs/oneplay.m3u; then
+          git add -f docs/oneplay.m3u
+
+          if git diff --cached --quiet; then
             echo "A lista nao teve alteracoes."
             exit 0
           fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/oneplay.m3u
+
           git commit -m "Atualiza lista OnePlay"
           git push
           
