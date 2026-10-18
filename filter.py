@@ -1,4 +1,3 @@
-
 import os
 import re
 import unicodedata
@@ -8,10 +7,9 @@ from pathlib import Path
 SOURCE_URL = os.environ["PLAYLIST_URL"]
 OUTPUT_FILE = Path("docs/oneplay.m3u")
 
-# Todas as categorias permitidas.
-# As cinco regiões da Globo são reunidas em GLOBO.
-# JOGOS DO DIA permanece excluída.
-# Não existe limite artificial de canais.
+MAX_GLOBO_POR_REGIAO = 15
+MAX_INFANTIS = 126
+
 GROUPS = [
     "ABERTOS",
     "GLOBO",
@@ -24,14 +22,14 @@ GROUPS = [
     "PREMIERE",
     "SPORTYNET PPV",
     "LUTAS / UFC",
-    "FILMES E SÉRIES",
-    "HBO",
     "HBO MAX PPV",
-    "TELECINE",
     "APPLE TV+ PPV",
     "DISNEY+ PPV",
     "PARAMOUNT+ PPV",
     "PRIME VIDEO PPV",
+    "FILMES E SÉRIES",
+    "HBO",
+    "TELECINE",
     "24H FILMES",
     "24H SÉRIES/PROGRAMAS",
     "DOCUMENTÁRIOS",
@@ -43,9 +41,188 @@ GROUPS = [
     "A FAZENDA 18",
 ]
 
+QUALITY_SUFFIXES = r"FHD2|FHD|H265|HD2|HD|SD2|SD|UHD|4K"
+
+REGION_KEYWORDS = {
+    "NORTE": [
+        "ACRE", "RIO BRANCO", "AMAPA", "MACAPA", "AMAZONAS",
+        "MANAUS", "ITACOATIARA", "PARINTINS", "PARA", "BELEM",
+        "ALTAMIRA", "CASTANHAL", "MARABA", "PARAGOMINAS",
+        "PARAUAPEBAS", "REDENCAO", "TAPAJOS", "RONDONIA",
+        "PORTO VELHO", "CACOAL", "VILHENA", "JI-PARANA",
+        "RORAIMA", "BOA VISTA", "GUAJARA MIRIM",
+    ],
+    "NORDESTE": [
+        "ALAGOAS", "MACEIO", "GAZETA ALAGOAS", "BAHIA",
+        "SALVADOR", "JUAZEIRO BAHIA", "CEARA", "FORTALEZA",
+        "VERDES MARES", "MARANHAO", "MIRANTE", "SAO LUIS",
+        "COCAIS", "PARAIBA", "CABO BRANCO", "PERNAMBUCO",
+        "RECIFE", "RIO GRANDE DO NORTE", "NATAL", "SERGIPE",
+        "TERESINA", "PIAUI", "SANTA CRUZ", "SERRA MAR",
+        "INTERTV COSTA BRANCA", "INTERTV CABUGI",
+        "OESTE BARREIRAS",
+    ],
+    "CENTRO-OESTE": [
+        "BRASILIA", "DISTRITO FEDERAL", "ANHANGUERA",
+        "GOIANIA", "ANAPOLIS", "CATALAO", "ITUMBIARA",
+        "JATAI", "LUZIANIA", "PORANGATU", "TOCANTINS",
+        "CENTRO AMERICA", "MATO GROSSO", "MORENA",
+        "CAMPO GRANDE", "CORUMBA", "PONTAPORA",
+    ],
+    "SUDESTE": [
+        "SAO PAULO", "GLOBO SP", "CAPITAL", "CAMPINAS",
+        "RIBEIRAO PRETO", "SAO CARLOS", "SUL DE MINAS",
+        "DIVINOPOLIS", "ARAXA", "JUIZ DE FORA", "UBERLANDIA",
+        "UBERABA", "MINAS", "VITORIA", "GAZETA ES",
+        "GAZETA VITORIA", "GAZETA SUL", "RIO DE JANEIRO",
+        "GLOBO RJ", "RIO SUL", "TV GRANDE RIO", "SANTOS",
+        "TRIBUNA", "BAURU", "ITAPETININGA", "SOROCABA",
+        "SJRP", "SAO JOSE DO RIO PRETO", "VANGUARDA",
+        "TAUBATE", "S J CAMPOS", "FRONTEIRA PAULISTA",
+        "INTEG", "INTEGRACAO",
+    ],
+    "SUL": [
+        "PARANA", "RPC", "CASCAVEL", "CURITIBA",
+        "FOZ DO IGUACU", "GUARAPUAVA", "LONDRINA",
+        "MARINGA", "PARANAVAI", "PONTA GROSSA",
+        "SANTA CATARINA", "NSC", "BLUMENAU", "CHAPECO",
+        "CRICIUMA", "FLORIANOPOLIS", "JOINVILLE",
+        "RIO GRANDE DO SUL", "RBS", "PORTO ALEGRE",
+        "CAXIAS DO SUL", "PASSO FUNDO", "PELOTAS",
+        "SANTA MARIA", "BAGE", "CRUZ ALTA",
+    ],
+}
+
+# Prioridade de títulos familiares e animações populares.
+# Se houver menos de 126 correspondências, o script completa
+# com outros títulos da categoria, em ordem alfabética.
+KIDS_PRIORITY = [
+    "BLUEY",
+    "BOB ESPONJA",
+    "PATRULHEIROS EM ACAO",
+    "PEIXONAUTA",
+    "MUNDO BITA",
+    "3 PALAVRINHAS",
+    "TURMA COCOMELON",
+    "DANIEL TIGRE",
+    "SANTIAGO DOS MARES",
+    "PJ MASKS",
+    "MIRACULOUS",
+    "GIGANTOSSAURO",
+    "BATWHEELS",
+    "BEN 10",
+    "POKEMON",
+    "POKEMON HORIZONTES",
+    "DRAGON BALL",
+    "NARUTO",
+    "NARUTO SHIPPUDEN",
+    "ONE PIECE",
+    "YU-GI-OH",
+    "AVATAR A LENDA DE AANG",
+    "HORA DE AVENTURA",
+    "IRMÃO DO JOREL",
+    "TOM E JERRY",
+    "PICA-PAU",
+    "OS SMURFS",
+    "TICO E TECO",
+    "TIMAO E PUMBA",
+    "DUCKTALES",
+    "BABY LOONEY TUNES",
+    "O SHOW DOS LOONEY TUNES",
+    "KND A TURMA DO BAIRRO",
+    "CORAGEM O CAO COVARDE",
+    "AS AVENTURAS DE JACKIE CHAN",
+    "JUSTICA JOVEM",
+    "LIGA DA JUSTICA SEM LIMITES",
+    "HOMEM-ARANHA",
+    "X-MEN",
+    "OS CAVALEIROS DO ZODIACO",
+    "SUPER ONZE",
+    "SUPER-C HOQUE",
+    "YU YU HAKUSHO",
+    "SAILOR MOON",
+    "DIGIMON",
+    "BEYBLADE",
+    "MEDABOTS",
+    "MECANIMAIS",
+    "GLOOBINHO",
+    "GLOOB",
+    "DISCOVERY KIDS",
+    "CARTOON NETWORK",
+    "CARTOONITO",
+    "TOONCAST",
+    "TV RA TIM BUM",
+    "DREAMWORKS",
+    "MUNDO MARAVILHOSAMENTE ESTRANHO DE GUMBALL",
+    "O SHOW DO PATRICK ESTRELA",
+    "OS JETSONS",
+    "ESQUADRILHA PARAFUSO",
+    "GARGULAS",
+    "HE-MAN",
+    "THUNDERCATS",
+    "SWAT KATS",
+    "LILO E STITCH",
+    "HOTEL TRANSYLVANIA",
+    "JELLYSTONE",
+    "MAYA E OS 3 GUERREIROS",
+    "YABBA-DABBA DINOSSAUROS",
+    "ZIG E SHARKO",
+    "TRES ESPIAS DEMAIS",
+    "A TURMA DO PATETA",
+    "A VACA E O FRANGO",
+    "A XERIFE CALLIE NO OESTE",
+    "ALADDIN",
+    "CAVA LO DE FOGO",
+    "CAPITAO PLANETA",
+    "DU DUDU E EDU",
+    "EDENS ZERO",
+    "FAIRY TAIL",
+    "HAIKYU",
+    "HUNTER X HUNTER",
+    "INUYASHA",
+    "JUJUTSU KAISEN",
+    "MY HERO ACADEMIA",
+    "MOB PSYCHO 100",
+    "ONE PUNCH MAN",
+    "SAKAMOTO DAYS",
+    "SOLO LEVELING",
+    "SPY X FAMILY",
+    "DR. STONE",
+    "FULLMETAL ALCHEMIST BROTHERHOOD",
+    "FRIEREN",
+    "VINLAND SAGA",
+    "KAIJU NO. 8",
+    "BLACK CLOVER",
+    "BLEACH",
+    "BLUE LOCK",
+    "DEMON SLAYER",
+    "JOJOS BIZARRE ADVENTURE",
+    "CHAINSAW MAN",
+    "CYBERPUNK",
+    "DEATH NOTE",
+    "NEON GENESIS EVANGELION",
+    "STEINSGATE",
+    "SWORD ART ONLINE",
+    "RECORD OF RAGNAROK",
+    "NANATSU NO TAIZAI",
+    "REZERO",
+    "THE RISING OF THE SHIELD HERO",
+    "OVERLORD",
+    "MASHLE",
+    "FUMETSU NO ANATA E",
+    "DAN DA DAN",
+    "TO BE HERO X",
+    "WHAT IF",
+    "X-MEN 97",
+    "INVENCIVEL",
+    "CAPITAO FALL",
+    "SCOTT PILGRIM",
+    "4 CONTRA O APOCALIPSE",
+    "100 LOBO",
+    "100 COISAS PARA FAZER ANTES DE VIRAR ZUMBI",
+]
 
 def normalize(text):
-    """Normaliza acentos, espaços, maiúsculas e caracteres compatíveis."""
     text = unicodedata.normalize("NFKD", text)
     text = "".join(
         char for char in text
@@ -56,154 +233,119 @@ def normalize(text):
 
 
 def fetch_playlist():
-    """Baixa a playlist de origem."""
     request = urllib.request.Request(
         SOURCE_URL,
-        headers={"User-Agent": "Mozilla/5.0"}
+        headers={"User-Agent": "Mozilla/5.0"},
     )
-
     with urllib.request.urlopen(request, timeout=120) as response:
-        content = response.read()
-
-    return content.decode("utf-8-sig", errors="replace")
+        return response.read().decode("utf-8-sig", errors="replace")
 
 
 def parse_playlist(content):
-    """Mantém juntas as linhas de cada entrada M3U."""
     entries = []
     current = []
 
     for raw_line in content.splitlines():
         line = raw_line.strip()
-
         if line.startswith("#EXTINF:"):
             if current:
                 entries.append(current)
             current = [line]
-
         elif current and line:
             current.append(line)
 
     if current:
         entries.append(current)
-
     return entries
 
 
 def get_group(entry):
-    """Obtém o group-title de uma entrada."""
     match = re.search(
         r'group-title\s*=\s*"([^"]*)"',
         entry[0],
-        re.IGNORECASE
+        re.IGNORECASE,
     )
-
     return match.group(1).strip() if match else ""
 
 
 def get_name(entry):
-    """Obtém o nome do canal."""
     return entry[0].rsplit(",", 1)[-1].strip()
 
 
 def canonical_group(group):
-    """Reconhece e normaliza somente as categorias permitidas."""
     name = normalize(group)
 
-    # Junta as cinco categorias regionais da Globo.
     if re.fullmatch(
         r"GLOBO\s+(CENTRO-OESTE|NORDESTE|NORTE|SUDESTE|SUL)",
-        name
+        name,
     ):
         return "GLOBO"
 
-    # Os destinos também ficam sem acentos, pois name já foi normalizado.
     aliases = {
         "LUTAS UFC": "LUTAS / UFC",
         "LUTAS/UFC": "LUTAS / UFC",
         "24H INFANTIS / DESENHOS": "24H INFANTIS/DESENHOS",
-        "24H SERIES/PROGRAMAS": "24H SERIES/PROGRAMAS",
-        "DOCUMENTARIOS": "DOCUMENTARIOS",
+        "24H SERIES/PROGRAMAS": "24H SÉRIES/PROGRAMAS",
+        "24H SÉRIES/PROGRAMAS": "24H SÉRIES/PROGRAMAS",
+        "DOCUMENTARIOS": "DOCUMENTÁRIOS",
         "NOTICIAS": "NOTICIAS",
     }
 
     name = aliases.get(name, name)
 
-    for allowed_group in GROUPS:
-        if name == normalize(allowed_group):
-            return allowed_group
-
-    # JOGOS DO DIA e todas as demais categorias ficam de fora.
+    for allowed in GROUPS:
+        if name == normalize(allowed):
+            return allowed
     return None
 
 
 def quality_rank(name):
-    """
-    Ordena variantes nesta prioridade:
-    FHD, FHD², H265, HD, HD², SD, SD².
-    A normalização transforma o sobrescrito ² em 2.
-    """
     normalized = normalize(name)
-
     patterns = [
         (r"\bFHD2$", 1),
         (r"\bFHD$", 0),
+        (r"\bUHD$", 0),
+        (r"\b4K$", 0),
         (r"\bH265$", 2),
         (r"\bHD2$", 4),
         (r"\bHD$", 3),
         (r"\bSD2$", 6),
         (r"\bSD$", 5),
     ]
-
     for pattern, rank in patterns:
         if re.search(pattern, normalized):
             return rank
-
     return 7
 
 
 def name_without_quality(name):
-    """Remove a qualidade do final para agrupar variantes do mesmo canal."""
-    normalized = normalize(name)
-
     return re.sub(
-        r"\s+(FHD2|FHD|H265|HD2|HD|SD2|SD)$",
+        rf"\s+({QUALITY_SUFFIXES})$",
         "",
-        normalized
+        normalize(name),
     ).strip()
 
 
 def natural_key(text):
-    """Ordena números naturalmente: 2 antes de 10."""
     parts = re.split(r"([0-9]+)", text.casefold())
-
     return tuple(
         (1, int(part)) if re.fullmatch(r"[0-9]+", part)
         else (0, part)
-        for part in parts
-        if part
+        for part in parts if part
     )
 
 
 def channel_sort_key(entry):
-    """
-    Agrupa primeiro pelo nome-base, depois pela qualidade.
-    Ex.: ESPN FHD antes de ESPN 2 FHD.
-    """
     name = get_name(entry)
-    base_name = name_without_quality(name)
-
     return (
-        natural_key(base_name),
+        natural_key(name_without_quality(name)),
         quality_rank(name),
         name.casefold(),
     )
 
 
 def set_group_title(entry, group):
-    """Atualiza o group-title sem alterar os outros metadados."""
     updated = list(entry)
-
     pattern = r'(\bgroup-title\s*=\s*")[^"]*(")'
 
     if re.search(pattern, updated[0], re.IGNORECASE):
@@ -212,10 +354,9 @@ def set_group_title(entry, group):
             lambda match: match.group(1) + group + match.group(2),
             updated[0],
             count=1,
-            flags=re.IGNORECASE
+            flags=re.IGNORECASE,
         )
     else:
-        # Se não houver group-title, adiciona o atributo ao EXTINF.
         updated[0] = re.sub(
             r"^(#EXTINF:[^,]*)(,)",
             lambda match: (
@@ -224,10 +365,112 @@ def set_group_title(entry, group):
                 + match.group(2)
             ),
             updated[0],
-            count=1
+            count=1,
+        )
+    return updated
+
+
+def region_for_channel(name):
+    normalized = normalize(name)
+    matches = []
+
+    for region, keywords in REGION_KEYWORDS.items():
+        if any(normalize(keyword) in normalized for keyword in keywords):
+            matches.append(region)
+
+    # Se o nome casar com mais de uma região, não classifica
+    # automaticamente para evitar uma região incorreta.
+    return matches[0] if len(matches) == 1 else None
+
+
+def select_globo(entries):
+    by_region = {region: {} for region in REGION_KEYWORDS}
+    unresolved = {}
+
+    for entry in entries:
+        name = get_name(entry)
+        base = name_without_quality(name)
+        region = region_for_channel(base)
+
+        destination = by_region[region] if region else unresolved
+        previous = destination.get(base)
+
+        if previous is None or quality_rank(name) < quality_rank(get_name(previous)):
+            destination[base] = entry
+
+    selected = []
+    regional_counts = {}
+
+    for region in REGION_KEYWORDS:
+        ordered = sorted(
+            by_region[region].values(),
+            key=channel_sort_key,
+        )
+        chosen = ordered[:MAX_GLOBO_POR_REGIAO]
+        selected.extend(chosen)
+        regional_counts[region] = len(chosen)
+
+    # Nomes sem região identificável não entram automaticamente
+    # na seleção das 75 emissoras.
+    print("Globo selecionada por região:")
+    for region, count in regional_counts.items():
+        print(f"  {region}: {count}")
+    print(f"  Sem região identificável: {len(unresolved)}")
+    print(f"  Total Globo selecionada: {len(selected)}")
+
+    return selected
+
+
+def kids_priority_key(entry):
+    name = normalize(get_name(entry))
+    for index, keyword in enumerate(KIDS_PRIORITY):
+        if normalize(keyword) in name:
+            return (0, index, natural_key(name))
+    return (1, 0, natural_key(name))
+
+
+def select_kids(entries):
+    # Canais lineares de TV infantil são mantidos individualmente
+    # por emissora, escolhendo apenas a melhor qualidade.
+    linear_groups = {}
+    vod_entries = {}
+
+    linear_keywords = (
+        "BOX KIDS TV", "CARTOON NETWORK", "CARTOONITO",
+        "DISCOVERY KIDS", "DREAMWORKS", "DUMDUM",
+        "GLOOB", "GLOOBINHO", "KIDS MAIS", "TOONCAST",
+        "TV RA TIM BUM",
+    )
+
+    for entry in entries:
+        name = get_name(entry)
+        base = name_without_quality(name)
+        normalized = normalize(name)
+
+        is_linear = any(
+            normalize(keyword) in normalized
+            for keyword in linear_keywords
         )
 
-    return updated
+        target = linear_groups if is_linear else vod_entries
+        previous = target.get(base)
+
+        if previous is None or quality_rank(name) < quality_rank(get_name(previous)):
+            target[base] = entry
+
+    linear = sorted(linear_groups.values(), key=channel_sort_key)
+    vod = sorted(vod_entries.values(), key=kids_priority_key)
+
+    # Mantém primeiro canais lineares; completa com desenhos/animes.
+    selected = linear[:MAX_INFANTIS]
+    remaining = MAX_INFANTIS - len(selected)
+    selected.extend(vod[:remaining])
+
+    print(f"Canais infantis lineares sem variantes repetidas: {len(linear)}")
+    print(f"Títulos de desenhos/animes disponíveis: {len(vod)}")
+    print(f"Entradas infantis selecionadas: {len(selected)}")
+
+    return selected
 
 
 def main():
@@ -254,48 +497,45 @@ def main():
             if normalize(original_group).startswith("JOGOS DO DIA"):
                 ignored_games += 1
             else:
-                unknown_groups.add(
-                    original_group or "(sem categoria)"
-                )
+                unknown_groups.add(original_group or "(sem categoria)")
             continue
 
         normalized_entry = set_group_title(entry, group)
         selected_by_group[group].append(normalized_entry)
 
-    # Ordena todas as entradas dentro de cada categoria.
-    for group in GROUPS:
-        selected_by_group[group].sort(key=channel_sort_key)
+    # Remove variantes de qualidade repetidas somente na Globo.
+    selected_by_group["GLOBO"] = select_globo(
+        selected_by_group["GLOBO"]
+    )
 
-    # Não aplica limite de canais.
+    # Seleciona 126 entradas da categoria infantil/desenhos.
+    selected_by_group["24H INFANTIS/DESENHOS"] = select_kids(
+        selected_by_group["24H INFANTIS/DESENHOS"]
+    )
+
+    for group in GROUPS:
+        if group not in ("GLOBO", "24H INFANTIS/DESENHOS"):
+            selected_by_group[group].sort(key=channel_sort_key)
+
     total_selected = sum(
         len(channels) for channels in selected_by_group.values()
     )
 
     if total_selected == 0:
         raise ValueError(
-            "Nenhum canal foi selecionado. "
-            "Verifique os nomes das categorias no relatório."
+            "Nenhum canal foi selecionado. Verifique as categorias."
         )
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-    with OUTPUT_FILE.open(
-        "w", encoding="utf-8", newline="\n"
-    ) as output:
+    with OUTPUT_FILE.open("w", encoding="utf-8", newline="\n") as output:
         output.write("#EXTM3U\n")
-
         for group in GROUPS:
             for entry in selected_by_group[group]:
                 output.write("\n".join(entry) + "\n")
 
     print(f"Entradas selecionadas: {total_selected}")
-    print("Limite de canais: nenhum")
-    print("Canais selecionados por categoria:")
-
-    for group in GROUPS:
-        count = len(selected_by_group[group])
-        print(f"  {group}: {count}")
-
+    print("Ordem de grupos atualizada.")
     print(f"Entradas JOGOS DO DIA ignoradas: {ignored_games}")
     print(f"Outras categorias não reconhecidas: {len(unknown_groups)}")
 
@@ -307,4 +547,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
