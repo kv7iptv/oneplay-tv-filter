@@ -9,6 +9,7 @@ SOURCE_URL = os.environ["PLAYLIST_URL"]
 OUTPUT_FILE = Path("docs/oneplay.m3u")
 
 MAX_GLOBO_POR_REGIAO = 15
+MAX_GLOBO_TOTAL = 75
 MAX_INFANTIS = 126
 
 GROUPS = [
@@ -52,6 +53,7 @@ REGION_KEYWORDS = {
         "PARAGOMINAS", "PARAUAPEBAS", "REDENCAO", "TAPAJOS",
         "RONDONIA", "PORTO VELHO", "CACOAL", "VILHENA",
         "JI-PARANA", "RORAIMA", "BOA VISTA", "GUAJARA MIRIM",
+        "TOCANTINS",
     ],
     "NORDESTE": [
         "ALAGOAS", "MACEIO", "GAZETA ALAGOAS", "BAHIA",
@@ -67,7 +69,7 @@ REGION_KEYWORDS = {
     "CENTRO-OESTE": [
         "BRASILIA", "DISTRITO FEDERAL", "ANHANGUERA",
         "GOIANIA", "ANAPOLIS", "CATALAO", "ITUMBIARA",
-        "JATAI", "LUZIANIA", "PORANGATU", "TOCANTINS",
+        "JATAI", "LUZIANIA", "PORANGATU",
         "CENTRO AMERICA", "MATO GROSSO", "MORENA",
         "CAMPO GRANDE", "CORUMBA", "PONTAPORA",
     ],
@@ -98,8 +100,6 @@ REGION_KEYWORDS = {
     ],
 }
 
-# Regras específicas para nomes ambíguos.
-# São avaliadas antes das palavras-chave genéricas.
 REGION_OVERRIDES = {
     "GLOBO RPC PARANAVAI": "SUL",
     "GLOBO DIARIO MOGI DAS CRUZES": "SUDESTE",
@@ -115,7 +115,50 @@ REGION_OVERRIDES = {
     "GLOBO TV SAO FRANCISCO": "NORDESTE",
     "GLOBO TV SUDOESTE": "NORDESTE",
     "GLOBO ASA BRANCA": "NORDESTE",
+    "GLOBO ALAGOAS": "NORDESTE",
+    "GLOBO GAZETA ALAGOAS": "NORDESTE",
+    "GLOBO AMAZONICA ITACOATIARA": "NORTE",
+    "GLOBO AMAZONICA MACAPA": "NORTE",
+    "GLOBO AMAZONICA MANAUS": "NORTE",
+    "GLOBO AMAZONICA PARINTINS": "NORTE",
+    "GLOBO AMAZONICA PORTO VELHO": "NORTE",
+    "GLOBO AMAZONICA RIO BRANCO": "NORTE",
+    "GLOBO AMAZONICA RONDONIA": "NORTE",
+    "GLOBO ANHANGUERA TOCANTINS": "NORTE",
+    "GLOBO CABO BRANCO": "NORDESTE",
+    "GLOBO INTERTV COSTA BRANCA": "NORDESTE",
+    "GLOBO JUAZEIRO BAHIA": "NORDESTE",
+    "GLOBO MIRANTE COCAIS": "NORDESTE",
+    "GLOBO MIRANTE SAO LUIS": "NORDESTE",
+    "GLOBO BRASILIA": "CENTRO-OESTE",
+    "GLOBO CENTRO AMERICA": "CENTRO-OESTE",
+    "GLOBO MORENA": "CENTRO-OESTE",
+    "GLOBO TV MORENA CORUMBA": "CENTRO-OESTE",
+    "GLOBO TV MORENA PONTAPORA": "CENTRO-OESTE",
+    "GLOBO RPC": "SUL",
+    "GLOBO NSC": "SUL",
+    "GLOBO RBS": "SUL",
 }
+
+# Canais principais usados primeiro quando for necessário
+# completar as 75 vagas com emissoras de outras regiões.
+GLOBO_PRIORIDADE_COMPLEMENTO = [
+    "GLOBO SP",
+    "GLOBO SAO PAULO",
+    "GLOBO CAPITAL",
+    "GLOBO RIO DE JANEIRO",
+    "GLOBO RJ",
+    "GLOBO MINAS",
+    "GLOBO NORDESTE",
+    "GLOBO BRASILIA",
+    "GLOBO BAHIA",
+    "GLOBO PERNAMBUCO",
+    "GLOBO CEARA",
+    "GLOBO ALAGOAS",
+    "GLOBO PARANA",
+    "GLOBO RBS PORTO ALEGRE",
+    "GLOBO AMAZONICA MANAUS",
+]
 
 KIDS_PRIORITY = [
     "BLUEY",
@@ -329,15 +372,15 @@ def quality_rank(name):
     normalized = normalize(name)
 
     patterns = [
-        (r"\bFHD2$", 1),
-        (r"\bFHD$", 0),
-        (r"\bUHD$", 0),
-        (r"\b4K$", 0),
-        (r"\bH265$", 2),
-        (r"\bHD2$", 4),
-        (r"\bHD$", 3),
-        (r"\bSD2$", 6),
-        (r"\bSD$", 5),
+        (r"\bFHD2(?:\s*[²³])?$", 1),
+        (r"\bFHD(?:\s*[²³])?$", 0),
+        (r"\bUHD(?:\s*[²³])?$", 0),
+        (r"\b4K(?:\s*[²³])?$", 0),
+        (r"\bH265(?:\s*[²³])?$", 2),
+        (r"\bHD2(?:\s*[²³])?$", 4),
+        (r"\bHD(?:\s*[²³])?$", 3),
+        (r"\bSD2(?:\s*[²³])?$", 6),
+        (r"\bSD(?:\s*[²³])?$", 5),
     ]
 
     for pattern, rank in patterns:
@@ -349,7 +392,7 @@ def quality_rank(name):
 
 def name_without_quality(name):
     return re.sub(
-        rf"\s+({QUALITY_SUFFIXES})$",
+        rf"\s+({QUALITY_SUFFIXES})(?:\s*[²³])?$",
         "",
         normalize(name),
     ).strip()
@@ -405,21 +448,25 @@ def set_group_title(entry, group):
 def region_for_channel(name):
     normalized = normalize(name)
 
-    # 1. Nomes específicos têm precedência.
     for exact_name, region in REGION_OVERRIDES.items():
         if normalize(exact_name) in normalized:
             return region
 
-    # 2. Evita a palavra genérica "PARA" causar conflito
-    # entre Pará e Paraná.
-    if "PARANAVAI" in normalized or "PARANA" in normalized:
+    # Paraná não deve ser confundido com Pará.
+    if any(term in normalized for term in [
+        "PARANAVAI", "PARANA", "RPC", "CURITIBA",
+        "CASCAVEL", "LONDRINA", "MARINGA",
+        "FOZ DO IGUACU", "GUARAPUAVA",
+    ]):
         return "SUL"
 
-    if (
-        "PARAGOMINAS" in normalized
-        or "TV LIBERAL" in normalized
-        or "PARAUAPEBAS" in normalized
-    ):
+    if any(term in normalized for term in [
+        "PARAGOMINAS", "TV LIBERAL", "PARAUAPEBAS",
+        "AMAZONICA", "AMAPA", "MACAPA", "MANAUS",
+        "ITACOATIARA", "PARINTINS", "PORTO VELHO",
+        "RIO BRANCO", "RONDONIA", "RORAIMA", "BOA VISTA",
+        "TAPAJOS", "BELEM", "TOCANTINS",
+    ]):
         return "NORTE"
 
     matches = []
@@ -428,7 +475,6 @@ def region_for_channel(name):
         for keyword in keywords:
             normalized_keyword = normalize(keyword)
 
-            # "PARA" sozinho é demasiado genérico.
             if normalized_keyword == "PARA":
                 continue
 
@@ -440,6 +486,7 @@ def region_for_channel(name):
 
 
 def select_globo(entries):
+    # Consolida variantes de qualidade da mesma emissora.
     by_region = {region: {} for region in REGION_KEYWORDS}
     unresolved = {}
 
@@ -457,20 +504,117 @@ def select_globo(entries):
         ):
             destination[base] = entry
 
-    selected = []
+    selected_by_region = {}
+    selected_keys = set()
 
     print("\nGlobo selecionada por região:")
 
+    # Primeira etapa: até 15 emissoras identificadas por região.
     for region in REGION_KEYWORDS:
         ordered = sorted(
             by_region[region].values(),
             key=channel_sort_key,
         )
+
         chosen = ordered[:MAX_GLOBO_POR_REGIAO]
-        selected.extend(chosen)
+        selected_by_region[region] = chosen
+
+        for entry in chosen:
+            selected_keys.add(name_without_quality(get_name(entry)))
+
         print(f"  {region}: {len(chosen)}")
 
-    print(f"  Sem região identificável: {len(unresolved)}")
+    selected_count = sum(
+        len(channels) for channels in selected_by_region.values()
+    )
+    missing = MAX_GLOBO_TOTAL - selected_count
+
+    # Segunda etapa: completa as vagas com outras emissoras Globo
+    # disponíveis, sem repetir a mesma emissora.
+    if missing > 0:
+        print(
+            f"\nFaltam {missing} emissoras para completar "
+            f"{MAX_GLOBO_TOTAL}. Procurando opções de complemento..."
+        )
+
+        candidates = {}
+
+        for region_channels in by_region.values():
+            for entry in region_channels.values():
+                base = name_without_quality(get_name(entry))
+                if base not in selected_keys:
+                    candidates[base] = entry
+
+        for base, entry in unresolved.items():
+            if base not in selected_keys:
+                candidates.setdefault(base, entry)
+
+        priority = [
+            normalize(name)
+            for name in GLOBO_PRIORIDADE_COMPLEMENTO
+        ]
+
+        def complement_key(entry):
+            base = name_without_quality(get_name(entry))
+
+            for index, preferred in enumerate(priority):
+                if preferred in base:
+                    return (0, index, channel_sort_key(entry))
+
+            return (1, 0, channel_sort_key(entry))
+
+        ordered_candidates = sorted(
+            candidates.values(),
+            key=complement_key,
+        )
+
+        added = []
+
+        for entry in ordered_candidates:
+            if missing <= 0:
+                break
+
+            base = name_without_quality(get_name(entry))
+
+            if base in selected_keys:
+                continue
+
+            added.append(entry)
+            selected_keys.add(base)
+            missing -= 1
+
+        if added:
+            print("\nEmissoras adicionadas para completar as 75:")
+
+            for entry in added:
+                name = get_name(entry)
+                region = region_for_channel(name) or "REGIÃO NÃO IDENTIFICADA"
+                print(f"  - {name} (origem: {region})")
+
+            # As emissoras de complemento ficam no grupo GLOBO,
+            # mantendo os nomes originais e sem duplicar entradas.
+            selected_by_region["COMPLEMENTO"] = added
+
+    selected = []
+
+    for region in REGION_KEYWORDS:
+        selected.extend(selected_by_region.get(region, []))
+
+    selected.extend(selected_by_region.get("COMPLEMENTO", []))
+
+    print("\nResumo final da seleção Globo:")
+
+    for region in REGION_KEYWORDS:
+        print(
+            f"  {region}: "
+            f"{len(selected_by_region.get(region, []))} "
+            "(selecionadas pela região)"
+        )
+
+    print(
+        "  Complemento de outras regiões: "
+        f"{len(selected_by_region.get('COMPLEMENTO', []))}"
+    )
     print(f"  Total Globo selecionada: {len(selected)}")
 
     if unresolved:
@@ -478,14 +622,11 @@ def select_globo(entries):
         for name in sorted(unresolved, key=natural_key):
             print(f"  - {name}")
 
-    meta = MAX_GLOBO_POR_REGIAO * len(REGION_KEYWORDS)
-
-    if len(selected) < meta:
+    if len(selected) != MAX_GLOBO_TOTAL:
         print(
-            "\nAVISO: não foi possível atingir a meta de "
-            f"{meta} emissoras com a classificação atual. "
-            "As emissoras sem região confirmada não serão incluídas "
-            "automaticamente."
+            "\nAVISO: a lista de origem não forneceu emissoras distintas "
+            f"suficientes para completar {MAX_GLOBO_TOTAL}. "
+            f"Total disponível selecionado: {len(selected)}."
         )
 
     return selected
@@ -593,37 +734,4 @@ def main():
             selected_by_group[group].sort(key=channel_sort_key)
 
     total_selected = sum(
-        len(channels) for channels in selected_by_group.values()
-    )
-
-    if total_selected == 0:
-        raise ValueError(
-            "Nenhum canal foi selecionado. Verifique as categorias."
-        )
-
-    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-    with OUTPUT_FILE.open("w", encoding="utf-8", newline="\n") as output:
-        output.write("#EXTM3U\n")
-
-        for group in GROUPS:
-            for entry in selected_by_group[group]:
-                output.write("\n".join(entry) + "\n")
-
-    print("\nResumo por categoria:")
-
-    for group in GROUPS:
-        print(f"  {group}: {len(selected_by_group[group])}")
-
-    print(f"Entradas selecionadas: {total_selected}")
-    print(f"Entradas JOGOS DO DIA ignoradas: {ignored_games}")
-    print(f"Outras categorias não reconhecidas: {len(unknown_groups)}")
-
-    for group in sorted(unknown_groups):
-        print(f"  Ignorada: {group}")
-
-    print(f"Arquivo criado: {OUTPUT_FILE}")
-
-
-if __name__ == "__main__":
-    main()
+        len(channels) for c
