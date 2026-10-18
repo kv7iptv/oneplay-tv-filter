@@ -1,3 +1,4 @@
+
 import os
 import re
 import unicodedata
@@ -93,137 +94,73 @@ REGION_KEYWORDS = {
     ],
 }
 
-# Prioridade de títulos familiares e animações populares.
-# Se houver menos de 126 correspondências, o script completa
-# com outros títulos da categoria, em ordem alfabética.
 KIDS_PRIORITY = [
-    "BLUEY",
-    "BOB ESPONJA",
-    "PATRULHEIROS EM ACAO",
-    "PEIXONAUTA",
-    "MUNDO BITA",
-    "3 PALAVRINHAS",
-    "TURMA COCOMELON",
-    "DANIEL TIGRE",
-    "SANTIAGO DOS MARES",
-    "PJ MASKS",
-    "MIRACULOUS",
-    "GIGANTOSSAURO",
-    "BATWHEELS",
-    "BEN 10",
-    "POKEMON",
-    "POKEMON HORIZONTES",
-    "DRAGON BALL",
-    "NARUTO",
-    "NARUTO SHIPPUDEN",
-    "ONE PIECE",
-    "YU-GI-OH",
-    "AVATAR A LENDA DE AANG",
-    "HORA DE AVENTURA",
-    "IRMÃO DO JOREL",
-    "TOM E JERRY",
-    "PICA-PAU",
-    "OS SMURFS",
-    "TICO E TECO",
-    "TIMAO E PUMBA",
-    "DUCKTALES",
-    "BABY LOONEY TUNES",
-    "O SHOW DOS LOONEY TUNES",
-    "KND A TURMA DO BAIRRO",
-    "CORAGEM O CAO COVARDE",
-    "AS AVENTURAS DE JACKIE CHAN",
-    "JUSTICA JOVEM",
-    "LIGA DA JUSTICA SEM LIMITES",
-    "HOMEM-ARANHA",
-    "X-MEN",
-    "OS CAVALEIROS DO ZODIACO",
-    "SUPER ONZE",
-    "SUPER-C HOQUE",
-    "YU YU HAKUSHO",
-    "SAILOR MOON",
-    "DIGIMON",
-    "BEYBLADE",
-    "MEDABOTS",
-    "MECANIMAIS",
-    "GLOOBINHO",
-    "GLOOB",
-    "DISCOVERY KIDS",
-    "CARTOON NETWORK",
-    "CARTOONITO",
-    "TOONCAST",
-    "TV RA TIM BUM",
-    "DREAMWORKS",
+    "BLUEY", "BOB ESPONJA", "PATRULHEIROS EM ACAO",
+    "PEIXONAUTA", "MUNDO BITA", "3 PALAVRINHAS",
+    "TURMA COCOMELON", "DANIEL TIGRE", "SANTIAGO DOS MARES",
+    "PJ MASKS", "MIRACULOUS", "GIGANTOSSAURO", "BATWHEELS",
+    "BEN 10", "POKEMON", "POKEMON HORIZONTES", "DRAGON BALL",
+    "NARUTO", "NARUTO SHIPPUDEN", "ONE PIECE", "YU-GI-OH",
+    "AVATAR A LENDA DE AANG", "HORA DE AVENTURA",
+    "IRMAO DO JOREL", "TOM E JERRY", "PICA-PAU", "OS SMURFS",
+    "TICO E TECO", "TIMAO E PUMBA", "DUCKTALES",
+    "BABY LOONEY TUNES", "O SHOW DOS LOONEY TUNES",
+    "KND A TURMA DO BAIRRO", "CORAGEM O CAO COVARDE",
+    "AS AVENTURAS DE JACKIE CHAN", "JUSTICA JOVEM",
+    "LIGA DA JUSTICA SEM LIMITES", "HOMEM-ARANHA", "X-MEN",
+    "OS CAVALEIROS DO ZODIACO", "SUPER ONZE", "SUPER-C HOQUE",
+    "YU YU HAKUSHO", "SAILOR MOON", "DIGIMON", "BEYBLADE",
+    "MEDABOTS", "MECANIMAIS", "GLOOBINHO", "GLOOB",
+    "DISCOVERY KIDS", "CARTOON NETWORK", "CARTOONITO",
+    "TOONCAST", "TV RA TIM BUM", "DREAMWORKS",
     "MUNDO MARAVILHOSAMENTE ESTRANHO DE GUMBALL",
-    "O SHOW DO PATRICK ESTRELA",
-    "OS JETSONS",
-    "ESQUADRILHA PARAFUSO",
-    "GARGULAS",
-    "HE-MAN",
-    "THUNDERCATS",
-    "SWAT KATS",
-    "LILO E STITCH",
-    "HOTEL TRANSYLVANIA",
-    "JELLYSTONE",
-    "MAYA E OS 3 GUERREIROS",
-    "YABBA-DABBA DINOSSAUROS",
-    "ZIG E SHARKO",
-    "TRES ESPIAS DEMAIS",
-    "A TURMA DO PATETA",
-    "A VACA E O FRANGO",
-    "A XERIFE CALLIE NO OESTE",
-    "ALADDIN",
-    "CAVA LO DE FOGO",
-    "CAPITAO PLANETA",
-    "DU DUDU E EDU",
-    "EDENS ZERO",
-    "FAIRY TAIL",
-    "HAIKYU",
-    "HUNTER X HUNTER",
-    "INUYASHA",
-    "JUJUTSU KAISEN",
-    "MY HERO ACADEMIA",
-    "MOB PSYCHO 100",
-    "ONE PUNCH MAN",
-    "SAKAMOTO DAYS",
-    "SOLO LEVELING",
-    "SPY X FAMILY",
-    "DR. STONE",
-    "FULLMETAL ALCHEMIST BROTHERHOOD",
-    "FRIEREN",
-    "VINLAND SAGA",
-    "KAIJU NO. 8",
-    "BLACK CLOVER",
-    "BLEACH",
-    "BLUE LOCK",
-    "DEMON SLAYER",
-    "JOJOS BIZARRE ADVENTURE",
-    "CHAINSAW MAN",
-    "CYBERPUNK",
-    "DEATH NOTE",
-    "NEON GENESIS EVANGELION",
-    "STEINSGATE",
-    "SWORD ART ONLINE",
-    "RECORD OF RAGNAROK",
-    "NANATSU NO TAIZAI",
-    "REZERO",
-    "THE RISING OF THE SHIELD HERO",
-    "OVERLORD",
-    "MASHLE",
-    "FUMETSU NO ANATA E",
-    "DAN DA DAN",
-    "TO BE HERO X",
-    "WHAT IF",
-    "X-MEN 97",
-    "INVENCIVEL",
-    "CAPITAO FALL",
-    "SCOTT PILGRIM",
-    "4 CONTRA O APOCALIPSE",
-    "100 LOBO",
+    "O SHOW DO PATRICK ESTRELA", "OS JETSONS",
+    "ESQUADRILHA PARAFUSO", "GARGULAS", "HE-MAN",
+    "THUNDERCATS", "SWAT KATS", "LILO E STITCH",
+    "HOTEL TRANSYLVANIA", "JELLYSTONE",
+    "MAYA E OS 3 GUERREIROS", "YABBA-DABBA DINOSSAUROS",
+    "ZIG E SHARKO", "TRES ESPIAS DEMAIS",
+    "A TURMA DO PATETA", "A VACA E O FRANGO",
+    "A XERIFE CALLIE NO OESTE", "ALADDIN", "CAVALO DE FOGO",
+    "CAPITAO PLANETA", "DU DUDU E EDU", "EDENS ZERO",
+    "FAIRY TAIL", "HAIKYU", "HUNTER X HUNTER", "INUYASHA",
+    "JUJUTSU KAISEN", "MY HERO ACADEMIA", "MOB PSYCHO 100",
+    "ONE PUNCH MAN", "SAKAMOTO DAYS", "SOLO LEVELING",
+    "SPY X FAMILY", "DR. STONE", "FULLMETAL ALCHEMIST BROTHERHOOD",
+    "FRIEREN", "VINLAND SAGA", "KAIJU NO. 8", "BLACK CLOVER",
+    "BLEACH", "BLUE LOCK", "DEMON SLAYER",
+    "JOJOS BIZARRE ADVENTURE", "CHAINSAW MAN", "CYBERPUNK",
+    "DEATH NOTE", "NEON GENESIS EVANGELION", "STEINSGATE",
+    "SWORD ART ONLINE", "RECORD OF RAGNAROK", "NANATSU NO TAIZAI",
+    "REZERO", "THE RISING OF THE SHIELD HERO", "OVERLORD",
+    "MASHLE", "FUMETSU NO ANATA E", "DAN DA DAN", "TO BE HERO X",
+    "WHAT IF", "X-MEN 97", "INVENCIVEL", "CAPITAO FALL",
+    "SCOTT PILGRIM", "4 CONTRA O APOCALIPSE", "100 LOBO",
     "100 COISAS PARA FAZER ANTES DE VIRAR ZUMBI",
 ]
 
+# Nomes-base de canais infantis lineares.
+# A comparação é exata depois de retirar o sufixo de qualidade.
+LINEAR_KIDS = {
+    normalize_name
+    for normalize_name in [
+        "BOX KIDS TV",
+        "CARTOON NETWORK",
+        "CARTOONITO",
+        "DISCOVERY KIDS",
+        "DREAMWORKS",
+        "DUMDUM",
+        "GLOOB",
+        "GLOOBINHO",
+        "KIDS MAIS",
+        "TOONCAST",
+        "TV RA TIM BUM",
+    ]
+}
+
+
 def normalize(text):
-    text = unicodedata.normalize("NFKD", text)
+    text = unicodedata.normalize("NFKD", text or "")
     text = "".join(
         char for char in text
         if not unicodedata.combining(char)
@@ -247,6 +184,7 @@ def parse_playlist(content):
 
     for raw_line in content.splitlines():
         line = raw_line.strip()
+
         if line.startswith("#EXTINF:"):
             if current:
                 entries.append(current)
@@ -256,6 +194,7 @@ def parse_playlist(content):
 
     if current:
         entries.append(current)
+
     return entries
 
 
@@ -275,32 +214,31 @@ def get_name(entry):
 def canonical_group(group):
     name = normalize(group)
 
-    if re.fullmatch(
-        r"GLOBO\s+(CENTRO-OESTE|NORDESTE|NORTE|SUDESTE|SUL)",
-        name,
-    ):
-        return "GLOBO"
+    # Primeiro, correspondência direta com todas as categorias permitidas.
+    # Isso evita falhas causadas por acentos ou aliases desnecessários.
+    for allowed in GROUPS:
+        if name == normalize(allowed):
+            return allowed
 
+    # Aliases aceitos para nomes alternativos da origem.
     aliases = {
         "LUTAS UFC": "LUTAS / UFC",
         "LUTAS/UFC": "LUTAS / UFC",
         "24H INFANTIS / DESENHOS": "24H INFANTIS/DESENHOS",
         "24H SERIES/PROGRAMAS": "24H SÉRIES/PROGRAMAS",
-        "24H SÉRIES/PROGRAMAS": "24H SÉRIES/PROGRAMAS",
-        "DOCUMENTARIOS": "DOCUMENTÁRIOS",
-        "NOTICIAS": "NOTICIAS",
+        "GLOBO NORTE": "GLOBO",
+        "GLOBO NORDESTE": "GLOBO",
+        "GLOBO CENTRO-OESTE": "GLOBO",
+        "GLOBO SUDESTE": "GLOBO",
+        "GLOBO SUL": "GLOBO",
     }
 
-    name = aliases.get(name, name)
-
-    for allowed in GROUPS:
-        if name == normalize(allowed):
-            return allowed
-    return None
+    return aliases.get(name)
 
 
 def quality_rank(name):
     normalized = normalize(name)
+
     patterns = [
         (r"\bFHD2$", 1),
         (r"\bFHD$", 0),
@@ -312,9 +250,11 @@ def quality_rank(name):
         (r"\bSD2$", 6),
         (r"\bSD$", 5),
     ]
+
     for pattern, rank in patterns:
         if re.search(pattern, normalized):
             return rank
+
     return 7
 
 
@@ -328,6 +268,7 @@ def name_without_quality(name):
 
 def natural_key(text):
     parts = re.split(r"([0-9]+)", text.casefold())
+
     return tuple(
         (1, int(part)) if re.fullmatch(r"[0-9]+", part)
         else (0, part)
@@ -337,6 +278,7 @@ def natural_key(text):
 
 def channel_sort_key(entry):
     name = get_name(entry)
+
     return (
         natural_key(name_without_quality(name)),
         quality_rank(name),
@@ -367,6 +309,7 @@ def set_group_title(entry, group):
             updated[0],
             count=1,
         )
+
     return updated
 
 
@@ -378,8 +321,6 @@ def region_for_channel(name):
         if any(normalize(keyword) in normalized for keyword in keywords):
             matches.append(region)
 
-    # Se o nome casar com mais de uma região, não classifica
-    # automaticamente para evitar uma região incorreta.
     return matches[0] if len(matches) == 1 else None
 
 
@@ -395,11 +336,14 @@ def select_globo(entries):
         destination = by_region[region] if region else unresolved
         previous = destination.get(base)
 
-        if previous is None or quality_rank(name) < quality_rank(get_name(previous)):
+        if (
+            previous is None
+            or quality_rank(name) < quality_rank(get_name(previous))
+        ):
             destination[base] = entry
 
     selected = []
-    regional_counts = {}
+    print("Globo selecionada por região:")
 
     for region in REGION_KEYWORDS:
         ordered = sorted(
@@ -408,67 +352,75 @@ def select_globo(entries):
         )
         chosen = ordered[:MAX_GLOBO_POR_REGIAO]
         selected.extend(chosen)
-        regional_counts[region] = len(chosen)
+        print(f"  {region}: {len(chosen)}")
 
-    # Nomes sem região identificável não entram automaticamente
-    # na seleção das 75 emissoras.
-    print("Globo selecionada por região:")
-    for region, count in regional_counts.items():
-        print(f"  {region}: {count}")
     print(f"  Sem região identificável: {len(unresolved)}")
     print(f"  Total Globo selecionada: {len(selected)}")
+
+    if len(selected) < MAX_GLOBO_POR_REGIAO * len(REGION_KEYWORDS):
+        print(
+            "AVISO: não foi possível atingir a meta regional. "
+            "Nenhum canal sem região confirmada foi incluído automaticamente."
+        )
 
     return selected
 
 
 def kids_priority_key(entry):
-    name = normalize(get_name(entry))
+    base = name_without_quality(get_name(entry))
+
     for index, keyword in enumerate(KIDS_PRIORITY):
-        if normalize(keyword) in name:
-            return (0, index, natural_key(name))
-    return (1, 0, natural_key(name))
+        if normalize(keyword) in base:
+            return (0, index, natural_key(base))
+
+    return (1, 0, natural_key(base))
 
 
 def select_kids(entries):
-    # Canais lineares de TV infantil são mantidos individualmente
-    # por emissora, escolhendo apenas a melhor qualidade.
     linear_groups = {}
     vod_entries = {}
-
-    linear_keywords = (
-        "BOX KIDS TV", "CARTOON NETWORK", "CARTOONITO",
-        "DISCOVERY KIDS", "DREAMWORKS", "DUMDUM",
-        "GLOOB", "GLOOBINHO", "KIDS MAIS", "TOONCAST",
-        "TV RA TIM BUM",
-    )
 
     for entry in entries:
         name = get_name(entry)
         base = name_without_quality(name)
-        normalized = normalize(name)
 
-        is_linear = any(
-            normalize(keyword) in normalized
-            for keyword in linear_keywords
-        )
+        # Correspondência exata para evitar que GLOOB, por exemplo,
+        # seja confundido com GLOOBINHO.
+        if base in LINEAR_KIDS:
+            target = linear_groups
+        else:
+            target = vod_entries
 
-        target = linear_groups if is_linear else vod_entries
         previous = target.get(base)
 
-        if previous is None or quality_rank(name) < quality_rank(get_name(previous)):
+        if (
+            previous is None
+            or quality_rank(name) < quality_rank(get_name(previous))
+        ):
             target[base] = entry
 
     linear = sorted(linear_groups.values(), key=channel_sort_key)
     vod = sorted(vod_entries.values(), key=kids_priority_key)
 
-    # Mantém primeiro canais lineares; completa com desenhos/animes.
     selected = linear[:MAX_INFANTIS]
     remaining = MAX_INFANTIS - len(selected)
     selected.extend(vod[:remaining])
 
-    print(f"Canais infantis lineares sem variantes repetidas: {len(linear)}")
-    print(f"Títulos de desenhos/animes disponíveis: {len(vod)}")
+    print(f"Canais infantis lineares únicos: {len(linear)}")
+    print(f"Títulos restantes disponíveis: {len(vod)}")
     print(f"Entradas infantis selecionadas: {len(selected)}")
+
+    if len(linear) == 0:
+        print(
+            "AVISO: nenhum canal linear reconhecido. "
+            "Confira os nomes reais da categoria na lista de origem."
+        )
+
+    if len(selected) < MAX_INFANTIS:
+        print(
+            f"AVISO: a categoria possui menos de {MAX_INFANTIS} "
+            "títulos únicos disponíveis."
+        )
 
     return selected
 
@@ -503,12 +455,10 @@ def main():
         normalized_entry = set_group_title(entry, group)
         selected_by_group[group].append(normalized_entry)
 
-    # Remove variantes de qualidade repetidas somente na Globo.
     selected_by_group["GLOBO"] = select_globo(
         selected_by_group["GLOBO"]
     )
 
-    # Seleciona 126 entradas da categoria infantil/desenhos.
     selected_by_group["24H INFANTIS/DESENHOS"] = select_kids(
         selected_by_group["24H INFANTIS/DESENHOS"]
     )
@@ -530,12 +480,16 @@ def main():
 
     with OUTPUT_FILE.open("w", encoding="utf-8", newline="\n") as output:
         output.write("#EXTM3U\n")
+
         for group in GROUPS:
             for entry in selected_by_group[group]:
                 output.write("\n".join(entry) + "\n")
 
+    print("\nResumo por categoria:")
+    for group in GROUPS:
+        print(f"  {group}: {len(selected_by_group[group])}")
+
     print(f"Entradas selecionadas: {total_selected}")
-    print("Ordem de grupos atualizada.")
     print(f"Entradas JOGOS DO DIA ignoradas: {ignored_games}")
     print(f"Outras categorias não reconhecidas: {len(unknown_groups)}")
 
@@ -547,3 +501,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
