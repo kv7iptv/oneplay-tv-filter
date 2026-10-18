@@ -9,7 +9,8 @@ SOURCE_URL = os.environ["PLAYLIST_URL"]
 OUTPUT_FILE = Path("docs/oneplay.m3u")
 MAX_CHANNELS = 850
 
-# Ordem de prioridade das categorias na lista final.
+# Exatamente as 33 categorias autorizadas.
+# A ordem define a prioridade quando o limite de 850 canais é atingido.
 GROUPS = [
     "ABERTOS",
     "GLOBO CENTRO-OESTE",
@@ -110,17 +111,19 @@ def get_name(entry):
 
 
 def group_priority(group):
-    """Retorna a posição da categoria na lista de prioridades."""
+    """Reconhece somente as 33 categorias autorizadas."""
     group_name = normalize(group)
 
-    # Aceita datas variáveis em JOGOS DO DIA (18/10), por exemplo.
+    # Aceita a data variável de JOGOS DO DIA, por exemplo:
+    # JOGOS DO DIA (18/10)
     if re.fullmatch(r"JOGOS DO DIA\s*\([^)]*\)", group_name):
         group_name = "JOGOS DO DIA"
 
+    # Variações de escrita permitidas para as categorias existentes.
+    # Os destinos também ficam normalizados, sem acentos.
     aliases = {
         "LUTAS UFC": "LUTAS / UFC",
         "LUTAS/UFC": "LUTAS / UFC",
-        "24H SERIES/PROGRAMAS": "24H SÉRIES/PROGRAMAS",
         "24H INFANTIS / DESENHOS": "24H INFANTIS/DESENHOS",
     }
 
@@ -135,14 +138,14 @@ def group_priority(group):
 
 def natural_key(name):
     """
-    Ordena números comuns naturalmente.
-    Exemplos: Canal 2 antes de Canal 10.
-    Caracteres como ² são tratados como texto, sem gerar erro.
+    Ordena números naturalmente.
+    Exemplo: Canal 2 vem antes de Canal 10.
     """
     parts = re.split(r"([0-9]+)", name.casefold())
 
     return tuple(
-        (1, int(part)) if re.fullmatch(r"[0-9]+", part) else (0, part)
+        (1, int(part)) if re.fullmatch(r"[0-9]+", part)
+        else (0, part)
         for part in parts
         if part
     )
@@ -167,6 +170,7 @@ def main():
         group = get_group(entry)
         priority = group_priority(group)
 
+        # Qualquer categoria fora das 33 é ignorada.
         if priority is None:
             unknown_groups.add(group or "(sem categoria)")
             continue
@@ -180,7 +184,7 @@ def main():
             key=lambda entry: natural_key(get_name(entry))
         )
 
-    # Seleciona até 850 canais respeitando a ordem das categorias.
+    # Seleciona no máximo 850 canais, respeitando a prioridade definida.
     selected = []
 
     for group in GROUPS:
@@ -199,6 +203,8 @@ def main():
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
+    # Preserva as linhas originais de cada canal, incluindo metadados,
+    # logos, URLs e demais informações fornecidas pela lista de origem.
     with OUTPUT_FILE.open(
         "w", encoding="utf-8", newline="\n"
     ) as output:
@@ -219,7 +225,7 @@ def main():
     print(f"Categorias não reconhecidas: {len(unknown_groups)}")
 
     for group in sorted(unknown_groups):
-        print(f"  Não reconhecida: {group}")
+        print(f"  Ignorada: {group}")
 
     print(f"Arquivo criado: {OUTPUT_FILE}")
 
