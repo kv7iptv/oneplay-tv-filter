@@ -9,24 +9,20 @@ SOURCE_URL = os.environ["PLAYLIST_URL"]
 OUTPUT_FILE = Path("docs/oneplay.m3u")
 MAX_CHANNELS = 850
 
-# Exatamente as 33 categorias autorizadas.
-# A ordem define a prioridade quando o limite de 850 canais é atingido.
+# Categorias finais, na ordem em que aparecerão na playlist.
+# JOGOS DO DIA foi removida.
+# As cinco categorias regionais da Globo serão reunidas em GLOBO.
 GROUPS = [
     "ABERTOS",
-    "GLOBO CENTRO-OESTE",
-    "GLOBO NORDESTE",
-    "GLOBO NORTE",
-    "GLOBO SUDESTE",
-    "GLOBO SUL",
+    "GLOBO",
     "BAND",
     "RECORD TV",
     "SBT",
-    "ESPORTES",
     "ESPN",
+    "ESPORTES",
     "SPORTV",
     "PREMIERE",
     "SPORTYNET PPV",
-    "JOGOS DO DIA",
     "LUTAS / UFC",
     "FILMES E SÉRIES",
     "HBO",
@@ -60,7 +56,7 @@ def normalize(text):
 
 
 def fetch_playlist():
-    """Baixa a lista de origem."""
+    """Baixa a playlist usando a URL guardada no segredo do GitHub."""
     request = urllib.request.Request(
         SOURCE_URL,
         headers={"User-Agent": "Mozilla/5.0"}
@@ -73,7 +69,7 @@ def fetch_playlist():
 
 
 def parse_playlist(content):
-    """Agrupa cada entrada EXTINF com as linhas seguintes."""
+    """Mantém juntas as linhas de cada entrada M3U."""
     entries = []
     current = []
 
@@ -95,7 +91,7 @@ def parse_playlist(content):
 
 
 def get_group(entry):
-    """Obtém o group-title de uma entrada."""
+    """Obtém o group-title da entrada."""
     match = re.search(
         r'group-title\s*=\s*"([^"]*)"',
         entry[0],
@@ -106,42 +102,74 @@ def get_group(entry):
 
 
 def get_name(entry):
-    """Obtém o nome do canal após a última vírgula do EXTINF."""
+    """Obtém o nome do canal."""
     return entry[0].rsplit(",", 1)[-1].strip()
 
 
-def group_priority(group):
-    """Reconhece somente as 33 categorias autorizadas."""
-    group_name = normalize(group)
+def canonical_group(group):
+    """Converte a categoria original para uma das categorias permitidas."""
+    name = normalize(group)
 
-    # Aceita a data variável de JOGOS DO DIA, por exemplo:
-    # JOGOS DO DIA (18/10)
-    if re.fullmatch(r"JOGOS DO DIA\s*\([^)]*\)", group_name):
-        group_name = "JOGOS DO DIA"
+    # Reúne as categorias regionais da Globo.
+    if re.fullmatch(r"GLOBO\s+(CENTRO-OESTE|NORDESTE|NORTE|SUDESTE|SUL)", name):
+        return "GLOBO"
 
-    # Variações de escrita permitidas para as categorias existentes.
-    # Os destinos também ficam normalizados, sem acentos.
     aliases = {
         "LUTAS UFC": "LUTAS / UFC",
         "LUTAS/UFC": "LUTAS / UFC",
         "24H INFANTIS / DESENHOS": "24H INFANTIS/DESENHOS",
+        "24H SERIES/PROGRAMAS": "24H SÉRIES/PROGRAMAS",
+        "DOCUMENTARIOS": "DOCUMENTÁRIOS",
+        "NOTÍCIAS": "NOTICIAS",
     }
 
-    group_name = aliases.get(group_name, group_name)
+    name = aliases.get(name, name)
 
-    for index, allowed_group in enumerate(GROUPS):
-        if group_name == normalize(allowed_group):
-            return index
+    for allowed_group in GROUPS:
+        if name == normalize(allowed_group):
+            return allowed_group
 
+    # JOGOS DO DIA e qualquer categoria não autorizada são ignorados.
     return None
 
 
-def natural_key(name):
+def quality_rank(name):
     """
-    Ordena números naturalmente.
-    Exemplo: Canal 2 vem antes de Canal 10.
+    Prioriza as variantes na ordem solicitada:
+    FHD, FHD², H265, HD, HD², SD, SD².
     """
-    parts = re.split(r"([0-9]+)", name.casefold())
+    normalized = normalize(name)
+
+    patterns = [
+        (r"\bFHD\s*²$", 1),
+        (r"\bFHD$", 0),
+        (r"\bH265$", 2),
+        (r"\bHD\s*²$", 4),
+        (r"\bHD$", 3),
+        (r"\bSD\s*²$", 6),
+        (r"\bSD$", 5),
+    ]
+
+    for pattern, rank in patterns:
+        if re.search(pattern, normalized):
+            return rank
+
+    return 7
+
+
+def name_without_quality(name):
+    """Remove a qualidade final para ordenar primeiro o nome-base."""
+    return re.sub(
+        r"\s+(FHD|H265|HD|SD)\s*²?$",
+        "",
+        name,
+        flags=re.IGNORECASE
+    ).strip()
+
+
+def natural_key(text):
+    """Ordena números como números: 2 antes de 10."""
+    parts = re.split(r"([0-9]+)", text.casefold())
 
     return tuple(
         (1, int(part)) if re.fullmatch(r"[0-9]+", part)
@@ -149,6 +177,36 @@ def natural_key(name):
         for part in parts
         if part
     )
+
+
+def channel_sort_key(entry):
+    """
+    Primeiro ordena pelo nome-base; depois pela qualidade.
+    Exemplo: ESPN FHD antes de ESPN 2 FHD.
+    """
+    name = get_name(entry)
+    base_name = name_without_quality(name)
+
+    return (
+        natural_key(base_name),
+        quality_rank(name),
+        name.casefold(),
+    )
+
+
+def set_group_title(entry, group):
+    """Atualiza apenas o group-title para a categoria final."""
+    updated = list(entry)
+
+    updated[0] = re.sub(
+        r'(\bgroup-title\s*=\s*")[^"]*(")',
+        lambda match: match.group(1) + group + match.group(2),
+        updated[0],
+        count=1,
+        flags=re.IGNORECASE
+    )
+
+    return updated
 
 
 def main():
@@ -165,64 +223,74 @@ def main():
 
     selected_by_group = {group: [] for group in GROUPS}
     unknown_groups = set()
+    ignored_games = 0
 
     for entry in entries:
-        group = get_group(entry)
-        priority = group_priority(group)
+        original_group = get_group(entry)
+        group = canonical_group(original_group)
 
-        # Qualquer categoria fora das 33 é ignorada.
-        if priority is None:
-            unknown_groups.add(group or "(sem categoria)")
+        if group is None:
+            if normalize(original_group).startswith("JOGOS DO DIA"):
+                ignored_games += 1
+            else:
+                unknown_groups.add(original_group or "(sem categoria)")
             continue
 
-        canonical_group = GROUPS[priority]
-        selected_by_group[canonical_group].append(entry)
+        # Agrupa os canais da Globo sob o mesmo group-title.
+        normalized_entry = set_group_title(entry, group)
+        selected_by_group[group].append(normalized_entry)
 
-    # Ordena os canais dentro de cada categoria.
+    # Ordena os canais de cada categoria.
     for group in GROUPS:
-        selected_by_group[group].sort(
-            key=lambda entry: natural_key(get_name(entry))
-        )
+        selected_by_group[group].sort(key=channel_sort_key)
 
-    # Seleciona no máximo 850 canais, respeitando a prioridade definida.
-    selected = []
+    # Distribui os canais em rodadas entre as categorias.
+    # Assim, categorias do final da lista também recebem espaço
+    # antes de categorias grandes consumirem todo o limite.
+    selected_by_group_limited = {group: [] for group in GROUPS}
 
-    for group in GROUPS:
-        remaining = MAX_CHANNELS - len(selected)
+    for round_index in range(MAX_CHANNELS):
+        for group in GROUPS:
+            channels = selected_by_group[group]
 
-        if remaining <= 0:
+            if round_index < len(channels):
+                if sum(len(items) for items in selected_by_group_limited.values()) >= MAX_CHANNELS:
+                    break
+
+                selected_by_group_limited[group].append(
+                    channels[round_index]
+                )
+
+        if sum(len(items) for items in selected_by_group_limited.values()) >= MAX_CHANNELS:
             break
-
-        selected.extend(selected_by_group[group][:remaining])
-
-    if not selected:
-        raise ValueError(
-            "Nenhum canal foi selecionado. "
-            "Verifique os nomes das categorias no log."
-        )
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-    # Preserva as linhas originais de cada canal, incluindo metadados,
-    # logos, URLs e demais informações fornecidas pela lista de origem.
     with OUTPUT_FILE.open(
         "w", encoding="utf-8", newline="\n"
     ) as output:
         output.write("#EXTM3U\n")
 
-        for entry in selected:
-            output.write("\n".join(entry) + "\n")
+        # Mantém as categorias agrupadas na ordem definida acima.
+        for group in GROUPS:
+            for entry in selected_by_group_limited[group]:
+                output.write("\n".join(entry) + "\n")
 
-    print(f"Entradas selecionadas: {len(selected)}")
+    total_selected = sum(
+        len(items) for items in selected_by_group_limited.values()
+    )
+
+    print(f"Entradas selecionadas: {total_selected}")
     print(f"Limite configurado: {MAX_CHANNELS}")
-    print("Canais reconhecidos por categoria:")
+    print("Canais selecionados por categoria:")
 
     for group in GROUPS:
-        count = len(selected_by_group[group])
-        if count:
-            print(f"  {group}: {count}")
+        count = len(selected_by_group_limited[group])
+        available = len(selected_by_group[group])
+        print(f"  {group}: {count} de {available}")
 
-    print(f"Categorias não reconhecidas: {len(unknown_groups)}")
+    print(f"Entradas JOGOS DO DIA ignoradas: {ignored_games}")
+    print(f"Outras categorias não reconhecidas: {len(unknown_groups)}")
 
     for group in sorted(unknown_groups):
         print(f"  Ignorada: {group}")
