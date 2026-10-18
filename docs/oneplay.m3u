@@ -103,6 +103,8 @@ http://nixonline.cfd:80/370598402/921286561/1432.m3u8
 http://nixonline.cfd:80/370598402/921286561/1434.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO ALAGOAS FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO ALAGOAS FHD
 http://nixonline.cfd:80/370598402/921286561/1389.m3u8
+#EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO ASA BRANCA FHD²" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO ASA BRANCA FHD²
+http://nixonline.cfd:80/370598402/921286561/929.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO BAHIA FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO BAHIA FHD
 http://nixonline.cfd:80/370598402/921286561/2102.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO CABO BRANCO FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO CABO BRANCO FHD
@@ -121,16 +123,14 @@ http://nixonline.cfd:80/370598402/921286561/2208.m3u8
 http://nixonline.cfd:80/370598402/921286561/407054.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO JUAZEIRO BAHIA" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO JUAZEIRO BAHIA
 http://nixonline.cfd:80/370598402/921286561/1861.m3u8
+#EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO JUAZEIRO DO NORTE" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO JUAZEIRO DO NORTE
+http://nixonline.cfd:80/370598402/921286561/446.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO MARANHÃO FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO MARANHÃO FHD
 http://nixonline.cfd:80/370598402/921286561/1410.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO MIRANTE COCAIS FHD²" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO MIRANTE COCAIS FHD²
 http://nixonline.cfd:80/370598402/921286561/2189.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO MIRANTE SÃO LUIS FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO MIRANTE SÃO LUIS FHD
 http://nixonline.cfd:80/370598402/921286561/1532.m3u8
-#EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO NATAL FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO NATAL FHD
-http://nixonline.cfd:80/370598402/921286561/1058.m3u8
-#EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO OESTE BARREIRAS BAHIA" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO OESTE BARREIRAS BAHIA
-http://nixonline.cfd:80/370598402/921286561/1388.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO ANHANGUERA FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO ANHANGUERA FHD
 http://nixonline.cfd:80/370598402/921286561/1378.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO ANHANGUERA ANAPOLIS" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO ANHANGUERA ANAPOLIS
@@ -159,6 +159,10 @@ http://nixonline.cfd:80/370598402/921286561/1314.m3u8
 http://nixonline.cfd:80/370598402/921286561/407027.m3u8
 #EXTINF:-1 tvg-id="globo.br" tvg-name="GLOBO TV MORENA PONTAPORÃ HD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO TV MORENA PONTAPORÃ HD
 http://nixonline.cfd:80/370598402/921286561/407026.m3u8
+#EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO DIARIO MOGI DAS CRUZES HD²" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO DIARIO MOGI DAS CRUZES HD²
+http://nixonline.cfd:80/370598402/921286561/144.m3u8
+#EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO DIARIO MOGIDAS CRUZES FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO DIARIO MOGIDAS CRUZES FHD
+http://nixonline.cfd:80/370598402/921286561/1313.m3u8
 #EXTINF:-1 tvg-id="globo.br" tvg-name="GLOBO DIVINÓPOLIS HD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO DIVINÓPOLIS HD
 http://nixonline.cfd:80/370598402/921286561/407057.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO EPCAMPINAS FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO EPCAMPINAS FHD
@@ -185,10 +189,6 @@ http://nixonline.cfd:80/370598402/921286561/1785.m3u8
 http://nixonline.cfd:80/370598402/921286561/1786.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO INTEG. JUIZ DE FORA FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO INTEG. JUIZ DE FORA FHD
 http://nixonline.cfd:80/370598402/921286561/1788.m3u8
-#EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO INTEG. UBERLÂNDIA FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO INTEG. UBERLÂNDIA FHD
-http://nixonline.cfd:80/370598402/921286561/877.m3u8
-#EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO INTER GRANDE MINAS FHD" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO INTER GRANDE MINAS FHD
-http://nixonline.cfd:80/370598402/921286561/1697.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO NSC BLUMENAU FHD²" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO NSC BLUMENAU FHD²
 http://nixonline.cfd:80/370598402/921286561/1235.m3u8
 #EXTINF:-1 tvg-id="globosp.br" tvg-name="GLOBO NSC CENTRO OESTE FHD²" tvg-logo="https://i.postimg.cc/DzjRQ1WY/image.png" group-title="GLOBO",GLOBO NSC CENTRO OESTE FHD²
