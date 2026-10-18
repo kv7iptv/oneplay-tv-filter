@@ -48,31 +48,31 @@ GROUPS = [
 
 
 def normalize(text):
-    """Normaliza acentos, espaços e maiúsculas para comparar categorias."""
+    """Normaliza acentos, espaços e maiúsculas."""
     text = unicodedata.normalize("NFKD", text)
     text = "".join(
         char for char in text
         if not unicodedata.combining(char)
     )
     text = text.upper().strip()
-    text = re.sub(r"\s+", " ", text)
-    return text
+    return re.sub(r"\s+", " ", text)
 
 
 def fetch_playlist():
+    """Baixa a lista de origem."""
     request = urllib.request.Request(
         SOURCE_URL,
         headers={"User-Agent": "Mozilla/5.0"}
     )
 
-    with urllib.request.urlopen(request, timeout=90) as response:
+    with urllib.request.urlopen(request, timeout=120) as response:
         content = response.read()
 
     return content.decode("utf-8-sig", errors="replace")
 
 
 def parse_playlist(content):
-    """Mantém cada entrada EXTINF e suas linhas associadas."""
+    """Agrupa cada entrada EXTINF com as linhas seguintes."""
     entries = []
     current = []
 
@@ -94,36 +94,30 @@ def parse_playlist(content):
 
 
 def get_group(entry):
-    header = entry[0]
-
+    """Obtém o group-title de uma entrada."""
     match = re.search(
         r'group-title\s*=\s*"([^"]*)"',
-        header,
+        entry[0],
         re.IGNORECASE
     )
 
-    if not match:
-        return ""
-
-    return match.group(1).strip()
+    return match.group(1).strip() if match else ""
 
 
 def get_name(entry):
-    header = entry[0]
-    return header.rsplit(",", 1)[-1].strip()
+    """Obtém o nome do canal após a última vírgula do EXTINF."""
+    return entry[0].rsplit(",", 1)[-1].strip()
 
 
 def group_priority(group):
+    """Retorna a posição da categoria na lista de prioridades."""
     group_name = normalize(group)
 
-    # A categoria de jogos pode conter uma data variável.
+    # Aceita datas variáveis em JOGOS DO DIA (18/10), por exemplo.
     if re.fullmatch(r"JOGOS DO DIA\s*\([^)]*\)", group_name):
         group_name = "JOGOS DO DIA"
 
-    # Pequenas variações de escrita conhecidas.
     aliases = {
-        "NOTICIAS": "NOTICIAS",
-        "NOTÍCIAS": "NOTICIAS",
         "LUTAS UFC": "LUTAS / UFC",
         "LUTAS/UFC": "LUTAS / UFC",
         "24H SERIES/PROGRAMAS": "24H SÉRIES/PROGRAMAS",
@@ -140,11 +134,15 @@ def group_priority(group):
 
 
 def natural_key(name):
-    """Ordena números naturalmente: Canal 2 vem antes de Canal 10."""
-    parts = re.split(r"(\d+)", name.casefold())
+    """
+    Ordena números comuns naturalmente.
+    Exemplos: Canal 2 antes de Canal 10.
+    Caracteres como ² são tratados como texto, sem gerar erro.
+    """
+    parts = re.split(r"([0-9]+)", name.casefold())
 
     return tuple(
-        (1, int(part)) if part.isdigit() else (0, part)
+        (1, int(part)) if re.fullmatch(r"[0-9]+", part) else (0, part)
         for part in parts
         if part
     )
@@ -160,6 +158,7 @@ def main():
         )
 
     entries = parse_playlist(content)
+    print(f"Entradas originais: {len(entries)}")
 
     selected_by_group = {group: [] for group in GROUPS}
     unknown_groups = set()
@@ -181,23 +180,21 @@ def main():
             key=lambda entry: natural_key(get_name(entry))
         )
 
-    # Mantém a prioridade definida e respeita o limite de segurança.
+    # Seleciona até 850 canais respeitando a ordem das categorias.
     selected = []
 
     for group in GROUPS:
-        for entry in selected_by_group[group]:
-            if len(selected) >= MAX_CHANNELS:
-                break
-            selected.append(entry)
+        remaining = MAX_CHANNELS - len(selected)
 
-        if len(selected) >= MAX_CHANNELS:
+        if remaining <= 0:
             break
+
+        selected.extend(selected_by_group[group][:remaining])
 
     if not selected:
         raise ValueError(
             "Nenhum canal foi selecionado. "
-            "Os nomes das categorias podem ser diferentes "
-            "dos configurados em GROUPS."
+            "Verifique os nomes das categorias no log."
         )
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -210,20 +207,19 @@ def main():
         for entry in selected:
             output.write("\n".join(entry) + "\n")
 
-    print(f"Entradas originais: {len(entries)}")
     print(f"Entradas selecionadas: {len(selected)}")
     print(f"Limite configurado: {MAX_CHANNELS}")
-    print("Canais por categoria:")
+    print("Canais reconhecidos por categoria:")
 
     for group in GROUPS:
         count = len(selected_by_group[group])
         if count:
             print(f"  {group}: {count}")
 
-    print(f"Grupos não reconhecidos: {len(unknown_groups)}")
+    print(f"Categorias não reconhecidas: {len(unknown_groups)}")
 
     for group in sorted(unknown_groups):
-        print(f"  Categoria não reconhecida: {group}")
+        print(f"  Não reconhecida: {group}")
 
     print(f"Arquivo criado: {OUTPUT_FILE}")
 
