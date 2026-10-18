@@ -102,12 +102,14 @@ def group_priority(group):
 
     return None
 
+
 def natural_key(name):
-    # Ordena ESPN, ESPN 2, ESPN 3...
-    return [
-        int(part) if part.isdigit() else part.casefold()
-        for part in re.split(r"(\d+)", name)
-    ]
+    parts = re.split(r"(\d+)", name.casefold())
+    return tuple(
+        (1, int(part)) if part.isdigit() else (0, part)
+        for part in parts
+        if part
+    )
 
 def main():
     content = fetch_playlist()
