@@ -1,20 +1,20 @@
 
-name: Atualizar lista OnePlay
+name: Monitorar lista original OnePlay
 
 on:
   schedule:
-    - cron: "17 6 * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: atualizar-lista-oneplay
+  group: monitorar-lista-oneplay
   cancel-in-progress: false
 
 jobs:
-  atualizar:
+  monitorar:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,30 +26,75 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Executar filtro da lista
+      - name: Baixar lista original
         env:
           PLAYLIST_URL: ${{ secrets.PLAYLIST_URL }}
+        run: |
+          python - <<'PY'
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          url = os.environ["PLAYLIST_URL"]
+          request = urllib.request.Request(
+              url,
+              headers={"User-Agent": "Mozilla/5.0"},
+          )
+
+          with urllib.request.urlopen(request, timeout=120) as response:
+              content = response.read()
+
+          if b"#EXTINF:" not in content:
+              raise SystemExit("A origem nao parece ser uma lista M3U valida.")
+
+          Path("/tmp/oneplay-original.m3u").write_bytes(content)
+          PY
+
+      - name: Comparar assinatura da lista original
+        id: comparar
+        run: |
+          mkdir -p state
+          sha256sum /tmp/oneplay-original.m3u | awk '{print $1}' > /tmp/source.sha256
+
+          if [ ! -f state/source.sha256 ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Primeira verificacao: a assinatura sera registrada."
+          elif ! cmp -s /tmp/source.sha256 state/source.sha256; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Mudanca detectada na lista original."
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Nenhuma mudanca na lista original."
+          fi
+
+      - name: Executar filtro da lista
+        if: steps.comparar.outputs.changed == 'true'
+        env:
+          PLAYLIST_URL: ${{ secrets.PLAYLIST_URL }}
+          PLAYLIST_FILE: /tmp/oneplay-original.m3u
         run: python filter.py
 
       - name: Verificar arquivo gerado
+        if: steps.comparar.outputs.changed == 'true'
         run: |
           test -s docs/oneplay.m3u
-          echo "Arquivo encontrado e nao esta vazio."
+          grep -q '^#EXTINF:' docs/oneplay.m3u
           echo "Quantidade de canais:"
           grep -c '^#EXTINF:' docs/oneplay.m3u
 
-      - name: Publicar lista atualizada
+      - name: Registrar assinatura e publicar lista
+        if: steps.comparar.outputs.changed == 'true'
         run: |
-          git add -f docs/oneplay.m3u
+          cp /tmp/source.sha256 state/source.sha256
+          git add -f docs/oneplay.m3u state/source.sha256
 
           if git diff --cached --quiet; then
-            echo "A lista nao teve alteracoes."
+            echo "Nenhuma diferenca para publicar."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git commit -m "Atualiza lista OnePlay"
+          git commit -m "Atualiza lista OnePlay apos mudanca na origem"
           git push
-          
