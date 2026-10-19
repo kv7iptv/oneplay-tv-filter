@@ -1,4 +1,3 @@
-
 import os
 import re
 import unicodedata
@@ -140,8 +139,6 @@ REGION_OVERRIDES = {
     "GLOBO RBS": "SUL",
 }
 
-# Canais principais usados primeiro quando for necessário
-# completar as 75 vagas com emissoras de outras regiões.
 GLOBO_PRIORIDADE_COMPLEMENTO = [
     "GLOBO SP",
     "GLOBO SAO PAULO",
@@ -486,7 +483,6 @@ def region_for_channel(name):
 
 
 def select_globo(entries):
-    # Consolida variantes de qualidade da mesma emissora.
     by_region = {region: {} for region in REGION_KEYWORDS}
     unresolved = {}
 
@@ -509,7 +505,6 @@ def select_globo(entries):
 
     print("\nGlobo selecionada por região:")
 
-    # Primeira etapa: até 15 emissoras identificadas por região.
     for region in REGION_KEYWORDS:
         ordered = sorted(
             by_region[region].values(),
@@ -529,8 +524,6 @@ def select_globo(entries):
     )
     missing = MAX_GLOBO_TOTAL - selected_count
 
-    # Segunda etapa: completa as vagas com outras emissoras Globo
-    # disponíveis, sem repetir a mesma emissora.
     if missing > 0:
         print(
             f"\nFaltam {missing} emissoras para completar "
@@ -591,8 +584,6 @@ def select_globo(entries):
                 region = region_for_channel(name) or "REGIÃO NÃO IDENTIFICADA"
                 print(f"  - {name} (origem: {region})")
 
-            # As emissoras de complemento ficam no grupo GLOBO,
-            # mantendo os nomes originais e sem duplicar entradas.
             selected_by_region["COMPLEMENTO"] = added
 
     selected = []
@@ -733,5 +724,20 @@ def main():
         if group not in ("GLOBO", "24H INFANTIS/DESENHOS"):
             selected_by_group[group].sort(key=channel_sort_key)
 
+    # CORREÇÃO: fecha corretamente o cálculo do total.
     total_selected = sum(
-        len(channels) for c
+        len(channels) for channels in selected_by_group.values()
+    )
+
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    with OUTPUT_FILE.open("w", encoding="utf-8", newline="\n") as output:
+        output.write("#EXTM3U\n")
+
+        for group in GROUPS:
+            for entry in selected_by_group[group]:
+                for line in entry:
+                    output.write(line + "\n")
+
+    print("\nResumo por categoria:")
+    for group in G
