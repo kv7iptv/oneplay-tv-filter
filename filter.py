@@ -739,5 +739,20 @@ def main():
                 for line in entry:
                     output.write(line + "\n")
 
-    print("\nResumo por categoria:")
-    for group in G
+        print("\nResumo por categoria:")
+    for group in GROUPS:
+        print(f"  {group}: {len(selected_by_group[group])}")
+
+    print(f"\nEntradas ignoradas de JOGOS DO DIA: {ignored_games}")
+
+    if unknown_groups:
+        print("\nCategorias desconhecidas ignoradas:")
+        for group in sorted(unknown_groups, key=natural_key):
+            print(f"  - {group}")
+
+    print(f"\nTotal de entradas selecionadas: {total_selected}")
+    print(f"Arquivo gerado: {OUTPUT_FILE}")
+
+
+if __name__ == "__main__":
+    main()
