@@ -302,6 +302,14 @@ def normalize(text):
 
 
 def fetch_playlist():
+    local_file = os.environ.get("PLAYLIST_FILE")
+
+    if local_file:
+        return Path(local_file).read_text(
+            encoding="utf-8-sig",
+            errors="replace",
+        )
+
     request = urllib.request.Request(
         SOURCE_URL,
         headers={"User-Agent": "Mozilla/5.0"},
